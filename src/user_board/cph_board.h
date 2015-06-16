@@ -92,17 +92,69 @@
 
 
 /*! LED #0 "L" pin definition (ORANGE).*/
-#define LED_0_NAME      "Orange_LED"
-#define LED0_GPIO       (PIO_PB27_IDX)
-#define LED0_FLAGS      (PIO_TYPE_PIO_OUTPUT_1 | PIO_DEFAULT)
-#define LED0_ACTIVE_LEVEL 0
-
+#define PIN_LED_0_IDX	PIO_PB27_IDX
 #define PIN_LED_0       {1 << 27, PIOB, ID_PIOB, PIO_OUTPUT_0, PIO_DEFAULT}
 #define PIN_LED_0_MASK  (1 << 27)
 #define PIN_LED_0_PIO   PIOB
 #define PIN_LED_0_ID    ID_PIOB
 #define PIN_LED_0_TYPE  PIO_OUTPUT_0
 #define PIN_LED_0_ATTR  PIO_DEFAULT
+
+
+
+/*! B.25 MODEM ON/OFF.*/
+#define MDM_ONOFF_IDX       	PIO_PB25_IDX
+#define MDM_ONOFF_MASK  		(1 << 25)
+#define MDM_ONOFF_PIO   		PIOB
+#define MDM_ONOFF_ID    		ID_PIOB
+#define MDM_ONOFF_TYPE  		PIO_OUTPUT_0
+#define MDM_ONOFF_ATTR  		PIO_DEFAULT
+
+/*! C.28 MODEM ENABLE.*/
+#define MDM_ENABLE_IDX       	PIO_PC28_IDX
+#define MDM_ENABLE_MASK  		(1 << 28)
+#define MDM_ENABLE_PIO   		PIOC
+#define MDM_ENABLE_ID    		ID_PIOC
+#define MDM_ENABLE_TYPE  		PIO_OUTPUT_0
+#define MDM_ENABLE_ATTR  		PIO_DEFAULT
+
+
+/*! C.26 MODEM RESET.*/
+#define MDM_RESET_IDX       	PIO_PC26_IDX
+#define MDM_RESET_MASK  		(1 << 26)
+#define MDM_RESET_PIO   		PIOC
+#define MDM_RESET_ID    		ID_PIOC
+#define MDM_RESET_TYPE  		PIO_OUTPUT_0
+#define MDM_RESET_ATTR  		PIO_DEFAULT
+
+
+/*! C.25 MODEM POWMON.*/
+#define MDM_POWMON_IDX       	PIO_PC25_IDX
+#define MDM_POWMON_MASK  		(1 << 25)
+#define MDM_POWMON_PIO   		PIOC
+#define MDM_POWMON_ID    		ID_PIOC
+#define MDM_POWMON_TYPE  		PIO_OUTPUT_0
+#define MDM_POWMON_ATTR  		PIO_DEFAULT
+
+
+/*! B.14 Labeled pin 52 on Arduino DUE.*/
+#define MDM_TESTPIN1_IDX			PIO_PB14_IDX
+#define MDM_TESTPIN1_MASK  		(1 << 14)
+#define MDM_TESTPIN1_PIO   		PIOB
+#define MDM_TESTPIN1_ID    		ID_PIOB
+#define MDM_TESTPIN1_TYPE  		PIO_INPUT
+#define MDM_TESTPIN1_ATTR  		PIO_DEFAULT
+
+/*! C.22 Labeled pin 8 on Arduino DUE MODEM TESTPIN.*/
+#define MDM_TESTPIN2_IDX			PIO_PC22_IDX
+#define MDM_TESTPIN2_MASK  		(1 << 22)
+#define MDM_TESTPIN2_PIO   		PIOC
+#define MDM_TESTPIN2_ID    		ID_PIOC
+#define MDM_TESTPIN2_TYPE  		PIO_OUTPUT_0
+#define MDM_TESTPIN2_ATTR  		PIO_DEFAULT
+
+
+
 
 
 

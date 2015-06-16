@@ -92,18 +92,22 @@ extern void vApplicationIdleHook(void) {
 extern void vApplicationTickHook(void) {
 }
 
+bool pin_powmon = false;
+
 static void task_led(void *pvParameters) {
 	UNUSED(pvParameters);
 	for (;;) {
-		pio_toggle_pin(LED0_GPIO);
+
+		pio_toggle_pin(PIN_LED_0_IDX);
+		pio_toggle_pin(MDM_ONOFF_IDX);
+		pio_toggle_pin(MDM_ENABLE_IDX);
+		pio_toggle_pin(MDM_RESET_IDX);
+
+		pin_powmon = pio_get_pin_value(MDM_POWMON_IDX);
+
 		vTaskDelay(500);
 	}
 }
-
-
-
-
-
 
 
 int main(void) {
@@ -112,7 +116,7 @@ int main(void) {
 
 
 	create_uart_cli_task(CONSOLE_UART, mainUART_CLI_TASK_STACK_SIZE, mainUART_CLI_TASK_PRIORITY);
-	create_dialer_usart_task(BOARD_USART, mainDIALER_TASK_STACK_SIZE, mainDIALER_TASK_PRIORITY);
+	create_dialer_task(mainDIALER_TASK_STACK_SIZE, mainDIALER_TASK_PRIORITY);
 	create_led_task();
 
 	/* Start the scheduler. */

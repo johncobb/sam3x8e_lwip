@@ -42,7 +42,8 @@ typedef struct
 
 
 
-
+#define CR							'\r'
+#define LF							'\n'
 #define MODEM_CMD_CTRLZ				0x1a
 #define MODEM_CMD_ESCAPE			0x1b
 #define MODEM_CMD_AT				"AT\r"

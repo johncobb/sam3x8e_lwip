@@ -14,17 +14,17 @@
 #include "usart.h"
 
 /* Dimensions the buffer into which input characters are placed. */
-#define MAX_INPUT_SIZE          50
+//#define MAX_INPUT_SIZE          50
 
 /* The size of the buffer provided to the USART driver for storage of received
  * bytes. */
-#define RX_BUFFER_SIZE_BYTES    (50)
+//#define RX_BUFFER_SIZE_BYTES    (50)
 
 /* Baud rate to use. */
-#define DIALER_BAUD_RATE           115200
+//#define DIALER_BAUD_RATE           115200
 
 
-void create_dialer_usart_task(Usart *usart_base, uint16_t stack_depth_words, unsigned portBASE_TYPE task_priority);
+void create_dialer_task(uint16_t stack_depth_words, unsigned portBASE_TYPE task_priority);
 
 xSemaphoreHandle dial_signal;
 
@@ -37,10 +37,7 @@ extern QueueHandle_t xDialerQueue;
 #define CMD_TYPE_CLOSE		2
 #define CMD_TYPE_RESET		3
 
-typedef struct {
-	uint8_t type;
 
-} dialer_cmd_t;
 
 
 #endif /* DIALER_H_ */

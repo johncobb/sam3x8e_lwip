@@ -49,6 +49,7 @@
 
 #define CONF_BOARD_LEDS
 
+#define CONF_BOARD_MODEM_CONTROL
 
 /** Enable Com Port. */
 #define CONF_BOARD_UART_CONSOLE
