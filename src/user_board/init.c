@@ -45,6 +45,7 @@
  */
 
 #include "compiler.h"
+
 #include "board.h"
 #include "conf_board.h"
 
@@ -62,7 +63,11 @@ void board_init(void)
 	pio_configure(MDM_ONOFF_PIO, MDM_ONOFF_TYPE, MDM_ONOFF_MASK, MDM_ONOFF_ATTR);
 	pio_configure(MDM_ENABLE_PIO, MDM_ENABLE_TYPE, MDM_ENABLE_MASK, MDM_ENABLE_ATTR);
 	pio_configure(MDM_RESET_PIO, MDM_RESET_TYPE, MDM_RESET_MASK, MDM_RESET_ATTR);
+
+	pmc_enable_periph_clk(ID_PIOC);
 	pio_configure(MDM_POWMON_PIO, MDM_POWMON_TYPE, MDM_POWMON_MASK, MDM_POWMON_ATTR);
+	//pio_set_input(MDM_POWMON_PIO, MDM_POWMON_MASK, PIO_DEFAULT);
+
 #endif
 
 
@@ -85,3 +90,13 @@ void board_init(void)
 
 
 }
+
+
+
+
+//
+//#ifdef CONF_BOARD_CAMERA
+//pio_configure_pin(PIN_CAM_EN_IDX, PIN_CAM_EN_FLAGS);
+//pio_configure_pin(PIN_CAM_VSYNC_IDX, PIN_CAM_VSYNC_FLAGS);
+//pio_configure_pin(PIN_CAM_CLK_IDX, PIN_CAM_CLK_FLAGS);
+//#endif

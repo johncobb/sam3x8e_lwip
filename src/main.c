@@ -98,12 +98,12 @@ static void task_led(void *pvParameters) {
 	UNUSED(pvParameters);
 	for (;;) {
 
-		pio_toggle_pin(PIN_LED_0_IDX);
-		pio_toggle_pin(MDM_ONOFF_IDX);
-		pio_toggle_pin(MDM_ENABLE_IDX);
-		pio_toggle_pin(MDM_RESET_IDX);
 
-		pin_powmon = pio_get_pin_value(MDM_POWMON_IDX);
+//		pio_toggle_pin(MDM_ONOFF_IDX);
+//		pio_toggle_pin(MDM_ENABLE_IDX);
+//		pio_toggle_pin(MDM_RESET_IDX);
+
+		pio_toggle_pin(PIN_LED_0_IDX);
 
 		vTaskDelay(500);
 	}
@@ -113,7 +113,6 @@ static void task_led(void *pvParameters) {
 int main(void) {
 	sysclk_init();
 	board_init();
-
 
 	create_uart_cli_task(CONSOLE_UART, mainUART_CLI_TASK_STACK_SIZE, mainUART_CLI_TASK_PRIORITY);
 	create_dialer_task(mainDIALER_TASK_STACK_SIZE, mainDIALER_TASK_PRIORITY);

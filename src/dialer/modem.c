@@ -54,9 +54,14 @@ static void SEND_AT(uint8_t *cmd);
 static sys_err handle_result(char * token, char ** ptr_out, uint8_t seconds);
 
 
+
+//uint32_t pow_mon = pio_get_pin_value(MDM_POWMON_IDX);
+//uint32_t pow_mon2 = pio_get(PIOC, PIO_TYPE_PIO_INPUT, PIO_PC25);
+
 void init_hw(void)
 {
 
+	SEND_AT("init_hw\r\n");
 	// Sanity check make sure pins are low
 	pio_set_pin_low(MDM_ENABLE_IDX);
 	pio_set_pin_low(MDM_RESET_IDX);
@@ -76,6 +81,7 @@ void init_hw(void)
 		}
 	}
 
+
 	while(true) {
 		pio_set_pin_high(MDM_ONOFF_IDX);
 		vTaskDelay(2500);
@@ -92,7 +98,7 @@ void init_hw(void)
 uint8_t modem_init(void)
 {
 	// Hardware must be initialized before usart
-	//init_hw();
+	init_hw();
 	init_usart(BOARD_USART);
 
 	const at_command_t* at_cmd = &(at_commands[0]);

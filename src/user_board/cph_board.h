@@ -6,6 +6,7 @@
 #include "system_sam3x.h"
 #include "exceptions.h"
 #include "pio.h"
+#include "pmc.h"
 
 /** Board oscillator settings */
 #define BOARD_FREQ_SLCK_XTAL        (32768U)
@@ -133,8 +134,8 @@
 #define MDM_POWMON_MASK  		(1 << 25)
 #define MDM_POWMON_PIO   		PIOC
 #define MDM_POWMON_ID    		ID_PIOC
-#define MDM_POWMON_TYPE  		PIO_OUTPUT_0
-#define MDM_POWMON_ATTR  		PIO_DEFAULT
+#define MDM_POWMON_TYPE  		PIO_INPUT
+#define MDM_POWMON_ATTR			PIO_PULLUP
 
 
 /*! B.14 Labeled pin 52 on Arduino DUE.*/
@@ -152,6 +153,36 @@
 #define MDM_TESTPIN2_ID    		ID_PIOC
 #define MDM_TESTPIN2_TYPE  		PIO_OUTPUT_0
 #define MDM_TESTPIN2_ATTR  		PIO_DEFAULT
+
+
+
+/*****************************************************************************/
+/*CAMERA */
+/*****************************************************************************/
+//
+//#define CAM_TWI_INSTANCETWI0
+//#define CAM_TWI_ADDRESSÊÊÊ(0x42>>1)
+//#define CAM_TWI_OPTS{ BOARD_MCK, 100000, CAM_TWI_ADDRESS }
+//#define CAM_TWI_DEFAULT_PACKET{ {0,0,0}, 1, 0, 1, CAM_TWI_ADDRESS }
+//
+//#define CAM_VSYNC_IDXPIO_PA15_IDX
+//#define CAM_EN_IDXPIO_PC10_IDX
+//
+//#define CAM_CAP_PIOPIOA
+//
+//#define CAM_CLK_IDPMC_PCK_0
+//#define CAM_CLK_SRCGENCLK_PCK_SRC_PLLBCK
+//#define CAM_CLK_PRESPMC_PCK_PRES_CLK_4
+//
+//#define PIN_CAM_CLK_IDXPIO_PB13_IDX
+//#define PIN_CAM_CLK_FLAGSPIO_PERIPH_B
+//
+//#define PIN_CAM_VSYNC_IDXCAM_VSYNC_IDX
+//#define PIN_CAM_VSYNC_FLAGS(PIO_INPUT | PIO_DEFAULT)
+//#define PIN_CAM_VSYNC_IFLAGS(PIO_PULLUP | PIO_IT_AIME | PIO_IT_RE_OR_HL | PIO_IT_EDGE)
+//
+//#define PIN_CAM_EN_IDXCAM_EN_IDX
+//#define PIN_CAM_EN_FLAGSPIO_OUTPUT_0
 
 
 
