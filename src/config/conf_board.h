@@ -93,7 +93,8 @@
 
 //#define CONF_BOARD_TWI1
 
-#define CONF_BOARD_USART
+#define CONF_MODEM_USART
+#define CONF_PRINTF_USART
 
 /* Configure USART RXD pin */
 //#define CONF_BOARD_USART_RXD

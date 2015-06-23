@@ -67,6 +67,8 @@ typedef struct
 #define MODEM_CMD_ACTGPRS			"AT#GPRS=1\r" // UNUSED: FAVOR OF CMD_ACT_CONTEXT
 #define MODEM_CMD_LISTENUDP			"AT#SLUDP=1,1,3500\r"
 
+#define MODEM_CMD_SENDSMS			"AT+CMGS=\"8126290240\"\r\nHello World\r\n\032"
+
 
 
 #ifdef MODEM_TYPE_ATT

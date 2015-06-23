@@ -19,6 +19,7 @@
 #include "freertos_usart_serial.h"
 
 #include "sysclk.h"
+#include "sys_arch.h"
 #include "modem_defs.h"
 #include "modem.h"
 #include "dialer.h"
@@ -39,28 +40,6 @@ static void ppp_dialer_task(void *pvParameters);
 
 static void init_ppp(void);
 
-volatile u32_t _sys_jiffies_ = 0;
-
-void sys_init(void)
-{
-	_sys_jiffies_ = sys_now();
-}
-
-u32_t sys_now(void)
-{
-	return (u32_t) xTaskGetTickCount();
-}
-
-u32_t sio_write(sio_fd_t fd, u8_t *data, u32_t len)
-{
-	return 0;
-}
-
-
-u32_t sys_jiffies(void)
-{
-	return _sys_jiffies_;
-}
 
 void modem_error_cb(void *ctx, int errCode, void *arg) {
 

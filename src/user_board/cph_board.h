@@ -8,6 +8,9 @@
 #include "pio.h"
 #include "pmc.h"
 
+// special function to initialize usart after configuring pins
+void board_init_modem_usart(void);
+
 /** Board oscillator settings */
 #define BOARD_FREQ_SLCK_XTAL        (32768U)
 #define BOARD_FREQ_SLCK_BYPASS      (32768U)
@@ -60,14 +63,26 @@
 /*! USART0 pin CTS  (labeled 24) */
 /*! USART0 pin RTS  (labeled 2) */
 
-#define BOARD_USART			USART0
-#define BOARD_USART_ID		ID_USART0
+#define MODEM_USART			USART0
+#define MODEM_USART_ID		ID_USART0
 
-#define PINS_USART_PIO		PIOA
-#define PINS_USART_ID		ID_PIOA
-#define PINS_USART_TYPE		PIO_PERIPH_A
-#define PINS_USART_MASK 	(PIO_PA10A_RXD0 | PIO_PA11A_TXD0 | PIO_PB26A_CTS0 | PIO_PB25A_RTS0)
-#define PINS_USART_ATTR		PIO_DEFAULT
+#define PINS_USART0_PIO		PIOA
+#define PINS_USART0_ID		ID_PIOA
+#define PINS_USART0_TYPE		PIO_PERIPH_A
+#define PINS_USART0_MASK 	(PIO_PA10A_RXD0 | PIO_PA11A_TXD0 | PIO_PB26A_CTS0 | PIO_PB25A_RTS0)
+#define PINS_USART0_ATTR		PIO_DEFAULT
+
+
+
+#define PRINTF_USART		USART1
+#define PRINTF_USART_ID		ID_USART1
+
+#define PINS_USART1_PIO		PIOA
+#define PINS_USART1_ID		ID_PIOA
+#define PINS_USART1_TYPE	PIO_PERIPH_A
+#define PINS_USART1_MASK 	(PIO_PA12A_RXD1 | PIO_PA13A_TXD1)// | PIO_PA15A_CTS1 | PIO_PA14A_RTS1)
+#define PINS_USART1_ATTR	PIO_DEFAULT
+
 
 
 
@@ -103,6 +118,27 @@
 
 
 
+/* Arduino DUE Pin  6*/
+#define PIN_LED1       		PIO_PC24_IDX
+#define PIN_LED1_MASK  		(1 << 24)
+#define PIN_LED1_PIO   		PIOC
+#define PIN_LED1_ID    		ID_PIOC
+#define PIN_LED1_TYPE  		PIO_OUTPUT_0
+#define PIN_LED1_ATTR  		PIO_DEFAULT
+
+/* Arduino DUE Pin  7*/
+#define PIN_LED2       		PIO_PC23_IDX
+#define PIN_LED2_MASK  		(1 << 23)
+#define PIN_LED2_PIO   		PIOC
+#define PIN_LED2_ID    		ID_PIOC
+#define PIN_LED2_TYPE  		PIO_OUTPUT_0
+#define PIN_LED2_ATTR  		PIO_DEFAULT
+
+
+
+
+
+
 /*! B.25 MODEM ON/OFF.*/
 #define MDM_ONOFF_IDX       	PIO_PB25_IDX
 #define MDM_ONOFF_MASK  		(1 << 25)
@@ -118,6 +154,7 @@
 #define MDM_ENABLE_ID    		ID_PIOC
 #define MDM_ENABLE_TYPE  		PIO_OUTPUT_0
 #define MDM_ENABLE_ATTR  		PIO_DEFAULT
+//#define MDM_ENABLE_ATTR  		PIO_PULLUP
 
 
 /*! C.26 MODEM RESET.*/
@@ -136,6 +173,7 @@
 #define MDM_POWMON_ID    		ID_PIOC
 #define MDM_POWMON_TYPE  		PIO_INPUT
 #define MDM_POWMON_ATTR			PIO_PULLUP
+
 
 
 /*! B.14 Labeled pin 52 on Arduino DUE.*/

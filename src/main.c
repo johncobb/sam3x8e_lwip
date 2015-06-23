@@ -5,7 +5,7 @@
 #include "asf.h"
 #include "conf_board.h"
 #include "cli_tasks.h"
-//#include "dialer.h"
+#include "dialer.h"
 #include "sysclk.h"
 #include "ppp.h"
 #include <stdio.h>
@@ -58,7 +58,7 @@ delete-task:
 /* The stack sizes allocated to the various tasks. */
 #define mainUART_CLI_TASK_STACK_SIZE    		(configMINIMAL_STACK_SIZE * 2)
 #define mainLED_TASK_STACK_SIZE					(configMINIMAL_STACK_SIZE * 2)
-#define mainDIALER_TASK_STACK_SIZE				(configMINIMAL_STACK_SIZE * 2)
+#define mainDIALER_TASK_STACK_SIZE				(configMINIMAL_STACK_SIZE * 4)
 
 
 // TODO: REVIEW STACK SIZE ALLOCATION
@@ -104,20 +104,56 @@ static void task_led(void *pvParameters) {
 //		pio_toggle_pin(MDM_RESET_IDX);
 
 		pio_toggle_pin(PIN_LED_0_IDX);
-
+		pio_toggle_pin(PIN_LED1);
+		pio_toggle_pin(PIN_LED2);
 		vTaskDelay(500);
 	}
 }
 
+#include "conf_uart_serial.h"
+#include "stdio_serial.h"
+
+#define USART_BAUDRATE      115200
+#define USART_CHAR_LENGTH   US_MR_CHRL_8_BIT
+#define USART_PARITY      US_MR_PAR_NO
+
+static void configure_console(void) {
+
+	sysclk_enable_peripheral_clock(PRINTF_USART_ID);
+
+	//const usart_serial_options_t uart_serial_options = { .baudrate = CONF_UART_BAUDRATE, .paritytype = CONF_UART_PARITY, };
+
+	const usart_serial_options_t uart_serial_options = {
+	      .baudrate = USART_BAUDRATE,
+	      .charlength =   USART_CHAR_LENGTH,
+	      .paritytype = USART_PARITY,
+	      .stopbits = false
+	      //US_MR_CHMODE_NORMAL
+	   };
+
+	usart_serial_init(PRINTF_USART, &uart_serial_options);
+	stdio_serial_init(PRINTF_USART, &uart_serial_options);
+
+	usart_enable_tx(PRINTF_USART);
+	usart_enable_rx(PRINTF_USART);
+}
 
 int main(void) {
 	sysclk_init();
 	board_init();
 
+	configure_console();
+	printf("CPH BaseStation v%d\r\n", 1);
+
+	printf("create_uart_cli_task\r\n");
 	create_uart_cli_task(CONSOLE_UART, mainUART_CLI_TASK_STACK_SIZE, mainUART_CLI_TASK_PRIORITY);
+	printf("create_dialer_task\r\n");
 	create_dialer_task(mainDIALER_TASK_STACK_SIZE, mainDIALER_TASK_PRIORITY);
+	printf("create_led_task\r\n");
 	create_led_task();
 
+
+	printf("starting task scheduler\r\n");
 	/* Start the scheduler. */
 	vTaskStartScheduler();
 

@@ -66,7 +66,7 @@ void board_init(void)
 
 	pmc_enable_periph_clk(ID_PIOC);
 	pio_configure(MDM_POWMON_PIO, MDM_POWMON_TYPE, MDM_POWMON_MASK, MDM_POWMON_ATTR);
-	//pio_set_input(MDM_POWMON_PIO, MDM_POWMON_MASK, PIO_DEFAULT);
+
 
 #endif
 
@@ -74,6 +74,9 @@ void board_init(void)
 #ifdef CONF_BOARD_LEDS
 	//pio_configure(PINS_LED0_PIO, PINS_LED0_TYPE, PINS_LED0_MASK, PINS_LED0_ATTR);
 	pio_configure(PIN_LED_0_PIO, PIN_LED_0_TYPE, PIN_LED_0_MASK, PIN_LED_0_ATTR);
+
+	pio_configure(PIN_LED1_PIO, PIN_LED1_TYPE, PIN_LED1_MASK, PIN_LED1_ATTR);
+	pio_configure(PIN_LED2_PIO, PIN_LED2_TYPE, PIN_LED2_MASK, PIN_LED2_ATTR);
 #endif
 
 #ifdef CONF_BOARD_UART_CONSOLE
@@ -82,13 +85,24 @@ void board_init(void)
 #endif
 
 
-#ifdef CONF_BOARD_USART
-	pio_configure(PINS_USART_PIO, PINS_USART_TYPE, PINS_USART_MASK, PINS_USART_ATTR);
+//#ifdef CONF_MODEM_USART
+//	pio_configure(PINS_USART0_PIO, PINS_USART0_TYPE, PINS_USART0_MASK, PINS_USART0_ATTR);
+//#endif
 
+
+#ifdef CONF_PRINTF_USART
+	pio_configure(PINS_USART1_PIO, PINS_USART1_TYPE, PINS_USART1_MASK, PINS_USART1_ATTR);
 #endif
 
 
+}
 
+
+void board_init_modem_usart(void)
+{
+#ifdef CONF_MODEM_USART
+	pio_configure(PINS_USART0_PIO, PINS_USART0_TYPE, PINS_USART0_MASK, PINS_USART0_ATTR);
+#endif
 }
 
 
