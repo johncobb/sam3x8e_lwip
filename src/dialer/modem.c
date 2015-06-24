@@ -11,9 +11,8 @@
 #include "modem.h"
 #include "modem_defs.h"
 #include "freertos_usart_serial.h"
-#include "sys_arch.h"
 #include "board.h"
-
+#include "sys_arch.h"
 
 
 const at_command_t at_commands[] =
@@ -23,7 +22,7 @@ const at_command_t at_commands[] =
 		{MODEM_CMD_CFUN, 		MODEM_TOKEN_OK, 3, 3},
 		{MODEM_CMD_CREG, 		MODEM_TOKEN_OK, 3, 3},
 		{MODEM_CMD_GAUTH, 		MODEM_TOKEN_OK, 3, 3},
-		{MODEM_CMD_SETCONTEXT, 	MODEM_TOKEN_OK, 3, 3},
+		//{MODEM_CMD_SETCONTEXT, 	MODEM_TOKEN_OK, 3, 3},
 		{MODEM_CMD_DIAL, 		MODEM_TOKEN_CONNECT, 3, 3},
 		{NULL, NULL, 0, 0}
 };
@@ -52,7 +51,7 @@ static uint8_t receive_buffer[RX_BUFFER_SIZE_BYTES] = {0};
 static void init_hw(void);
 static void init_usart(Usart *usart_base);
 static void SEND_AT(uint8_t *cmd);
-static sys_err handle_result(char * token, char ** ptr_out, uint8_t seconds);
+static sys_result handle_result(char * token, char ** ptr_out, uint8_t seconds);
 
 
 
@@ -148,13 +147,19 @@ uint8_t modem_init(void)
 
 		char * ptr = NULL;
 
-		if(handle_result(at_cmd->result, &ptr,  at_cmd->timeout) == SYS_OK) {
+		sys_result sys_status = handle_result(at_cmd->result, &ptr,  at_cmd->timeout);
+
+		if(sys_status == SYS_AT_OK) {
 			//at_cmd++;
 			printf("SYS_OK\r\n");
-		}
-		else {
+			continue;
+		} else if (sys_status == SYS_ERR_AT_FAIL) {
 			printf("SYS_ERR_AT_FAIL\r\n");
-			return SYS_ERR_AT_FAIL;
+		} else if (sys_status == SYS_ERR_AT_NOCARRIER) {
+			printf("SYS_ERR_AT_NO_CARRIER\r\n");
+		} else if(sys_status == SYS_ERR_AT_TIMEOUT) {
+			printf("SYS_ERR_AT_TIMEOUT\r\n");
+			//return SYS_ERR_AT_FAIL;
 		}
 
 //		for(int r_time=0; r_time< at_cmd->retries; r_time++) {
@@ -226,7 +231,7 @@ static void SEND_AT(uint8_t *cmd)
 
 
 
-static sys_err handle_result(char * token, char ** ptr_out, uint8_t seconds)
+static sys_result handle_result(char * token, char ** ptr_out, uint8_t seconds)
 {
 	printf("handle_result\r\n");
 	char * ptr = NULL;
@@ -266,16 +271,103 @@ static sys_err handle_result(char * token, char ** ptr_out, uint8_t seconds)
 				if(ptr_out != NULL) {
 					*ptr_out = ptr;
 					//printf("sys_ok\r\n");
-					return SYS_OK;
+					return SYS_AT_OK;
 				}
+			} else if ((ptr = strstr(input_string, MODEM_TOKEN_ERROR))) {
+				*ptr_out = ptr;
+				return SYS_ERR_AT_FAIL;
+			} else if((ptr = strstr(input_string, MODEM_TOKEN_NOCARRIER))) {
+				*ptr_out = ptr;
+				return SYS_ERR_AT_NOCARRIER;
 			} else if (input_index < MAX_INPUT_SIZE) {
 				input_string[input_index] = received_char;
+				printf("buffer: %s\r\n", input_string);
 				input_index++;
 			}
 
 		}
 	}
 	//printf("sys_err_at_fail\r\n");
-	return SYS_ERR_AT_FAIL;
+	return SYS_ERR_AT_TIMEOUT;
+}
+
+
+sys_result process_modem(char * token, char ** ptr_out, uint8_t seconds);
+void init_modem_buffer(void);
+sys_result read_modem_usart(uint8_t seconds);
+
+
+uint8_t modem_lines[MAX_INPUT_SIZE+1];
+uint8_t modem_line_index = 0;
+
+uint8_t modem_buffer[MAX_INPUT_SIZE+1];
+uint8_t modem_buffer_index = 0;
+
+sys_result process_modem(char * token, char ** ptr_out, uint8_t seconds)
+{
+	if(read_modem_usart(seconds) == SYS_AT_OK) {
+
+		char * ptr = NULL;
+
+		if((ptr = strstr(modem_lines, token))) {
+			if(ptr_out != NULL) {
+				*ptr_out = ptr;
+				//printf("sys_ok\r\n");
+				return SYS_AT_OK;
+			}
+		} else if ((ptr = strstr(modem_lines, MODEM_TOKEN_ERROR))) {
+			*ptr_out = ptr;
+			return SYS_ERR_AT_FAIL;
+		} else if((ptr = strstr(modem_lines, MODEM_TOKEN_NOCARRIER))) {
+			*ptr_out = ptr;
+			return SYS_ERR_AT_NOCARRIER;
+		}
+	}
+
+	return SYS_ERR_AT_TIMEOUT;
+}
+
+sys_result read_modem_usart(uint8_t seconds)
+{
+	uint8_t c;
+	uint8_t buffer_index = 0;
+
+	// convert to seconds
+	uint32_t timeout = ((uint32_t)sys_now()) + (seconds*1000);
+	//portTickType max_block_time_ticks = 200UL / portTICK_RATE_MS;
+
+	while(sys_now() <= timeout)
+	{
+		if (freertos_usart_serial_read_packet(modem_usart, &c, sizeof(c), portMAX_DELAY) == sizeof(c)) {
+
+			if(c == '\0')
+				continue;
+
+			modem_buffer[buffer_index] = c;
+			buffer_index++;
+
+			if(buffer_index >= MAX_INPUT_SIZE)
+				break;
+
+			if (c == '\r' || c == '\n') {
+				strcpy(modem_buffer, modem_lines);
+				init_modem_buffer();
+				return SYS_AT_OK;
+			}
+		}
+	}
+
+	return SYS_ERR_AT_TIMEOUT;
+}
+
+void init_modem_buffer(void)
+{
+	modem_line_index = 0;
+	memset(modem_buffer, '\0', sizeof(modem_buffer));
+}
+
+void init_modem_lines(void)
+{
+	memset(modem_lines, '\0', sizeof(modem_lines));
 }
 

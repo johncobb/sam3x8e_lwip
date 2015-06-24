@@ -26,9 +26,12 @@ static freertos_usart_if modem_usart;
 typedef enum
 {
 	SYS_OK = 0,
+	SYS_AT_OK,
+	SYS_ERR_AT_TIMEOUT,
+	SYS_ERR_AT_NOCARRIER,
 	SYS_ERR_AT_FAIL,
 	SYS_ERR_FAIL_OTHERS
-}sys_err;
+}sys_result;
 
 uint8_t modem_init(void);
 
