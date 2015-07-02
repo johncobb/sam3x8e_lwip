@@ -115,8 +115,9 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/asf/thirdparty/freertos-plus/source}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/asf/thirdparty/CMSIS/Lib/GCC}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/asf/common/utils/interrupt}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/asf/thirdparty/lwip/lwip-1.41/src/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/asf/thirdparty/lwip/lwip-1.41/src/sam/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/asf/thirdparty/lwip/lwip-1.41/src/sam/include/arch}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/asf/thirdparty/lwip/lwip-1.41/src/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/asf/thirdparty/lwip/lwip-1.41/src/include/ipv4}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/asf/thirdparty/lwip/lwip-1.41/src/include/lwip}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src/asf/thirdparty/lwip/lwip-1.41/src/netif/ppp}&quot;"/>

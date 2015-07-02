@@ -60,6 +60,7 @@
 #include "FreeRTOS_CLI.h"
 #include "semphr.h"
 #include "cli.h"
+#include "modem.h"
 #include "dialer.h"
 
 /*
@@ -196,6 +197,26 @@ void dispatch_dialer_command(void)
 	xSemaphoreGive(dial_signal);
 }
 
+
+void dispatch_config_command(void);
+
+/* Structure that defines the "delete-task" command line command.  This deletes
+the task that was previously created using the "create-command" command. */
+static const CLI_Command_Definition_t config_command_definition =
+{
+	(const int8_t *const) "config",
+	(const int8_t *const) "config:\r\n tells modem to run configuration\r\n\r\n",
+	dispatch_config_command, /* The function to run. */
+	0 /* A single parameter should be entered. */
+};
+
+void dispatch_config_command(void)
+{
+	modem_config();
+	//xSemaphoreGive(config_signal);
+}
+
+
 /*-----------------------------------------------------------*/
 
 void vRegisterCLICommands(void)
@@ -208,6 +229,7 @@ void vRegisterCLICommands(void)
 	FreeRTOS_CLIRegisterCommand(&create_task_command_definition);
 	FreeRTOS_CLIRegisterCommand(&delete_task_command_definition);
 	FreeRTOS_CLIRegisterCommand(&dialer_command_definition);
+	FreeRTOS_CLIRegisterCommand(&config_command_definition);
 }
 
 /*-----------------------------------------------------------*/

@@ -36,12 +36,62 @@ xSemaphoreHandle dial_signal = 0;
 
 
 static void ppp_dialer_task(void *pvParameters);
+static void ppp_link_status_callback(void *ctx, int errCode, void *arg) ;
+
+static void ppp_link_status_callback(void *ctx, int errCode, void *arg) {
 
 
-static void init_ppp(void);
+	LWIP_UNUSED_ARG(ctx);
 
+	switch(errCode) {
+		case PPPERR_NONE: {             /* No error. */
+			struct ppp_addrs *ppp_addrs = arg;
 
-void modem_error_cb(void *ctx, int errCode, void *arg) {
+			printf("pppLinkStatusCallback: PPPERR_NONE\n");
+			printf(" our_ipaddr=%s\n", ip_ntoa(&ppp_addrs->our_ipaddr));
+			printf(" his_ipaddr=%s\n", ip_ntoa(&ppp_addrs->his_ipaddr));
+			printf(" netmask   =%s\n", ip_ntoa(&ppp_addrs->netmask));
+			printf(" dns1      =%s\n", ip_ntoa(&ppp_addrs->dns1));
+			printf(" dns2      =%s\n", ip_ntoa(&ppp_addrs->dns2));
+			break;
+		}
+		case PPPERR_PARAM: {           /* Invalid parameter. */
+			printf("pppLinkStatusCallback: PPPERR_PARAM\n");
+			break;
+		}
+		case PPPERR_OPEN: {            /* Unable to open PPP session. */
+			printf("pppLinkStatusCallback: PPPERR_OPEN\n");
+			break;
+		}
+		case PPPERR_DEVICE: {          /* Invalid I/O device for PPP. */
+			printf("pppLinkStatusCallback: PPPERR_DEVICE\n");
+			break;
+		}
+		case PPPERR_ALLOC: {           /* Unable to allocate resources. */
+			printf("pppLinkStatusCallback: PPPERR_ALLOC\n");
+			break;
+		}
+		case PPPERR_USER: {            /* User interrupt. */
+			printf("pppLinkStatusCallback: PPPERR_USER\n");
+			break;
+		}
+		case PPPERR_CONNECT: {         /* Connection lost. */
+			printf("pppLinkStatusCallback: PPPERR_CONNECT\n");
+			break;
+		}
+		case PPPERR_AUTHFAIL: {        /* Failed authentication challenge. */
+			printf("pppLinkStatusCallback: PPPERR_AUTHFAIL\n");
+			break;
+		}
+		case PPPERR_PROTOCOL: {        /* Failed to meet protocol. */
+			printf("pppLinkStatusCallback: PPPERR_PROTOCOL\n");
+			break;
+		}
+		default: {
+			printf("pppLinkStatusCallback: unknown errCode %d\n", errCode);
+			break;
+		}
+	}
 
 }
 
@@ -71,25 +121,124 @@ void create_dialer_task(uint16_t stack_depth_words, unsigned portBASE_TYPE task_
 
 }
 
+uint8_t ppp_buffer[32+1];
+
 static void ppp_dialer_task(void *pvParameters)
 {
+	int connected = 0;
 	uint8_t received_char, input_index = 0, *output_string;
 	static int8_t input_string[MAX_INPUT_SIZE],
 			last_input_string[MAX_INPUT_SIZE];
 	portBASE_TYPE returned_value;
 	portTickType max_block_time_ticks = 200UL / portTICK_RATE_MS;
 
-
+	printf("pppInit\r\n");
 	pppInit();
-	// TODO: init string and dial the modem
+	printf("pppSetAuth\r\n");
+	//pppSetAuth(PPPAUTHTYPE_NONE, "", "");
+	pppSetAuth(PPPAUTHTYPE_ANY, "", "");
 
+
+	printf("modem_init\r\n");
 	modem_init();
+	printf("modem_connect\r\n");
+	modem_connect();
 
-	pppSetAuth(PPPAUTHTYPE_NONE, "", "");
 
-	void * link_status_ctx;
 
-	int pppFd = pppOpen((sio_fd_t) modem_usart, modem_error_cb, link_status_ctx);
+	printf("pppOpen\r\n");
+
+	int pppFd = pppOverSerialOpen(modem_usart, ppp_link_status_callback, &connected);
+
+	printf("pppFd: %d\r\n", pppFd);
+
+//	int loop_count = 0;
+//
+//	if(pppFd >=0) {
+//
+//		while(true) {
+//			loop_count++;
+//			if(loop_count == 60){
+//				printf("timeout\r\n");
+//				break;
+//			}
+//			if(connected) {
+//				printf("ppp established\r\n");
+//				break;
+//			}
+//			vTaskDelay(1000);
+//
+//		}
+//
+//		while(true) {
+//			printf("nothing to do\r\n");
+//			vTaskDelay(1000);
+//		}
+//	}
+
+
+	/* end handling ppp communications */
+
+	uint8_t len = 0;
+
+	printf("entering loop\r\n");
+
+	while(true) {
+
+		memset(ppp_buffer, '0', 32+1);
+
+		portTickType max_wait_millis = 20 / portTICK_RATE_MS;
+
+
+		len = freertos_usart_serial_read_packet(modem_usart, ppp_buffer, 32, max_wait_millis);
+		//len = read_modem();
+		//printf("len: %d\r\n", len);
+		if(len>0) {
+			pppos_input(pppFd, ppp_buffer, len);
+
+		}
+
+		//vTaskDelay(50);
+	}
+
+
+
+//	lwip_init();
+//
+//	uint8_t MYDATALEN = 128;
+//	uint8_t mydata[MYDATALEN];
+//
+//	struct tcp_pcb *pcb;
+//	struct ip_addr ipaddr;
+//	uint16_t port;
+//	err_t err = ERR_CONN;
+//
+//
+//	pcb = tcp_new();
+//	IP4_ADDR(&ipaddr, 10,10, 10, 100);
+//	port = 80;
+//
+//	err = tcp_connect(pcb, &ipaddr, port, tcp_connected);
+//
+//	if(err != ERR_OK) {
+//		printf("tcp_connecte returned error: %d\r\n", err);
+//	} else {
+//		printf("connected\r\n");
+//	}
+//
+//	//tcp_connect();
+//	tcp_write(pcb, mydata, MYDATALEN, 0);
+//	//tcp_send(pcb);
+
+
+
+
+	/* end handling ppp communications */
+
+
+
+
+
 
 
 

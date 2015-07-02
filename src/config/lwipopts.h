@@ -45,9 +45,6 @@
 #ifndef __LWIPOPTS_H__
 #define __LWIPOPTS_H__
 
-/* Include ethernet configuration first */
-//#include "conf_eth.h"
-
 /*
    -----------------------------------------------
    -------------- LwIP API Support ---------------
@@ -55,9 +52,20 @@
 */
 
 
+
+#define LWIP_DEBUG						1
+
+
 #define PPP_SUPPORT                     1
+#define PPP_INPROC_OWNTHREAD			0
+#define PPP_INPROC_MULTITHREADED		0
 
 
+/*
+   -----------------------------------------------
+   -------------- LwIP API Support ---------------
+   -----------------------------------------------
+*/
 
 /**
  * NO_SYS==1: Provides VERY minimal functionality. Otherwise,
@@ -109,7 +117,7 @@
  * MEM_SIZE: the size of the heap memory. If the application will send
  * a lot of data that needs to be copied, this should be set high.
  */
-#define MEM_SIZE                		4 * 1024
+#define MEM_SIZE                		14 * 1024
 
 /**
  * MEMP_NUM_UDP_PCB: the number of UDP protocol control blocks. One
@@ -122,7 +130,7 @@
  * MEMP_NUM_TCP_PCB: the number of simulatenously active TCP connections.
  * (requires the LWIP_TCP option)
  */
-#define MEMP_NUM_TCP_PCB                2
+#define MEMP_NUM_TCP_PCB                16
 
 /**
  * MEMP_NUM_TCP_PCB_LISTEN: the number of listening TCP connections.
@@ -156,7 +164,7 @@
  * If the application sends a lot of data out of ROM (or other static memory),
  * this should be set high.
  */
-#define MEMP_NUM_PBUF                   2
+#define MEMP_NUM_PBUF                   32
 
 /**
  * MEMP_NUM_NETBUF: the number of struct netbufs.
@@ -168,12 +176,19 @@
  * MEMP_NUM_NETCONN: the number of struct netconns.
  * (only needed if you use the sequential API, like api_lib.c)
  */
-#define MEMP_NUM_NETCONN                0
+#define MEMP_NUM_NETCONN                10
 
 /**
  * PBUF_POOL_SIZE: the number of buffers in the pbuf pool.
  */
-#define PBUF_POOL_SIZE                  4
+#define PBUF_POOL_SIZE                  10
+
+
+/**
+ * PBUF_POOL_BUFSIZE: the size of each pbuf in the pbuf pool.
+ */
+#define PBUF_POOL_BUFSIZE               512
+
 
 /*
    ----------------------------------
@@ -302,12 +317,12 @@
 #define LWIP_NOASSERT
 
 //#define LWIP_DEBUG
-#define LWIP_DBG_MIN_LEVEL              LWIP_DBG_LEVEL_ALL
+#define LWIP_DBG_MIN_LEVEL              LWIP_DBG_LEVEL_ALL //LWIP_DBG_LEVEL_OFF
 #define LWIP_DBG_TYPES_ON               LWIP_DBG_ON
 
 #define ETHARP_DEBUG                    LWIP_DBG_OFF
 #define NETIF_DEBUG                     LWIP_DBG_OFF
-#define PBUF_DEBUG                      LWIP_DBG_OFF
+#define PBUF_DEBUG                      LWIP_DBG_ON
 #define API_LIB_DEBUG                   LWIP_DBG_OFF
 #define API_MSG_DEBUG                   LWIP_DBG_OFF
 #define SOCKETS_DEBUG                   LWIP_DBG_OFF
@@ -317,8 +332,8 @@
 #define IP_DEBUG                        LWIP_DBG_OFF
 #define IP_REASS_DEBUG                  LWIP_DBG_OFF
 #define RAW_DEBUG                       LWIP_DBG_OFF
-#define MEM_DEBUG                       LWIP_DBG_ON
-#define MEMP_DEBUG                      LWIP_DBG_ON
+#define MEM_DEBUG                       LWIP_DBG_OFF
+#define MEMP_DEBUG                      LWIP_DBG_OFF
 #define SYS_DEBUG                       LWIP_DBG_OFF
 #define TIMERS_DEBUG                    LWIP_DBG_OFF
 #define TCP_DEBUG                       LWIP_DBG_OFF
@@ -339,7 +354,4 @@
 #define SNMP_MSG_DEBUG                  LWIP_DBG_OFF
 #define SNMP_MIB_DEBUG                  LWIP_DBG_OFF
 #define DNS_DEBUG                       LWIP_DBG_OFF
-
-// \note For a list of all possible lwIP configurations, check http://lwip.wikia.com/wiki/Lwipopts.h
-
 #endif /* __LWIPOPTS_H__ */

@@ -53,14 +53,19 @@
 #include "queue.h"
 #include "semphr.h"
 
+// custom timing functions
+//u32_t sys_jiffies(void);
+//u32_t sys_now(void);
+//u32_t sys_jiffies(void);
 
-typedef xSemaphoreHandle sys_sem_t;
-typedef xQueueHandle sys_mutex_t;
-typedef xQueueHandle sys_mbox_t;
-typedef xTaskHandle sys_thread_t;
+//typedef xSemaphoreHandle sys_sem_t;
+//typedef xQueueHandle sys_mutex_t;
+//typedef xQueueHandle sys_mbox_t;
+//typedef xTaskHandle sys_thread_t;
 
 #define SYS_MBOX_NULL (xQueueHandle)0
 #define SYS_SEM_NULL  (xSemaphoreHandle)0
+//#define SYS_MBOX_EMPTY SYS_ARCH_BLOCKING_TICKTIMEOUT
 
 typedef unsigned long int sys_prot_t;
 

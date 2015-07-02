@@ -8,14 +8,42 @@
 #ifndef MODEM_DEFS_H_
 #define MODEM_DEFS_H_
 
+#include "modem.h"
+
+typedef void (*callback_func_t)(void);
+typedef void (*callback_funcex_t)(char * token, uint8_t seconds, sys_result *result);
 
 typedef struct
 {
 	uint8_t *cmd;
 	char *result;
-	uint8_t timeout;
+	uint32_t timeout;
 	uint8_t retries;
+	callback_funcex_t callback;
 }at_command_t;
+
+typedef struct
+{
+	uint8_t *cmd;
+	char *result;
+	uint32_t timeout;
+	uint8_t retries;
+	callback_func_t callback;
+}at_command_cnx_t;
+
+
+typedef struct
+{
+	uint8_t busy;
+	uint8_t context;
+	uint8_t signal;
+	uint8_t creg;
+	uint8_t connected;
+}modem_status_t;
+
+
+extern modem_status_t modem_status;
+
 
 #define MODEM_RESULT_NODATA			0X00
 #define MODEM_RESULT_FOUND			0X01
@@ -50,8 +78,9 @@ typedef struct
 #define MODEM_CMD_ATF				"AT&F\r"
 #define MODEM_CMD_ECHOOFF			"ATE0\r"
 #define MODEM_CMD_SELINT			"AT#SELINT=2\r"
+#define MODEM_CMD_ATZ				"ATZ\r"
 
-#define MODEM_CMD_SETMSGFMT			"AT+CMGF=1\r"
+#define MODEM_CMD_MSGFMT			"AT+CMGF=1\r"
 #define MODEM_CMD_MONI				"AT#MONI\r"
 #define MODEM_CMD_CFUN				"AT+CFUN=1\r"
 #define MODEM_CMD_CREG				"AT+CREG=1\r"
@@ -59,6 +88,7 @@ typedef struct
 #define MODEM_CMD_QUERYNETWORK		"AT+CREG?\r"
 #define MODEM_CMD_QUERYSIGNAL		"AT+CSQ?\r"
 #define MODEM_CMD_SETCONTEXT		"AT+CGDCONT=1,\"IP\",\"c1.korem2m.com\"\r"
+//#define MODEM_CMD_SETCONTEXT		"AT+CGDCONT=1,\"IP\",\"a10.korem2m.com\"\r"
 #define MODEM_CMD_DIAL				"ATD*99***1#\r"
 
 #define MODEM_CMD_QUERYCONTEXT		"AT#SGACT?\r"
@@ -71,15 +101,15 @@ typedef struct
 
 
 
-#ifdef MODEM_TYPE_ATT
-	#define MODEM_CMD_SETBAND		"AT#BND=1\r"	// 850/1900 default
-	#define MODEM_CMD_SETCONTEXT	"AT+CGDCONT=1,\"IP\",\"%s\"\r"
-	//#define CMD_USERID			"AT#USERID=\"\"\r"
-	//#define CMD_PASSWORD			"AT#PASSW=\"\"\r"
-	#define MODEM_CMD_USERID2		"AT#USERID=\"%s\"\r"
-	#define MODEM_CMD_PASSWORD2		"AT#PASSW=\"%s\"\r"
 
-#endif
+#define MODEM_CMD_SETBAND		"AT#BND=1\r"	// 850/1900 default
+//#define MODEM_CMD_SETCONTEXT	"AT+CGDCONT=1,\"IP\",\"%s\"\r"
+//#define CMD_USERID			"AT#USERID=\"\"\r"
+//#define CMD_PASSWORD			"AT#PASSW=\"\"\r"
+//#define MODEM_CMD_USERID2		"AT#USERID=\"%s\"\r"
+//#define MODEM_CMD_PASSWORD2		"AT#PASSW=\"%s\"\r"
+
+
 
 
 #ifdef MODEM_TYPE_CDMA

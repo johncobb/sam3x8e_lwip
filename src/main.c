@@ -58,7 +58,7 @@ delete-task:
 /* The stack sizes allocated to the various tasks. */
 #define mainUART_CLI_TASK_STACK_SIZE    		(configMINIMAL_STACK_SIZE * 2)
 #define mainLED_TASK_STACK_SIZE					(configMINIMAL_STACK_SIZE * 2)
-#define mainDIALER_TASK_STACK_SIZE				(configMINIMAL_STACK_SIZE * 4)
+#define mainDIALER_TASK_STACK_SIZE				(1024)
 
 
 // TODO: REVIEW STACK SIZE ALLOCATION
@@ -94,10 +94,19 @@ extern void vApplicationTickHook(void) {
 
 bool pin_powmon = false;
 
+//uint32_t timeout = 0;
+
 static void task_led(void *pvParameters) {
 	UNUSED(pvParameters);
+
+//	timeout = ((uint32_t)sys_now()) + (2000);
+
 	for (;;) {
 
+//		if(sys_now() >= timeout) {
+//			printf("timeout\r\n");
+//			timeout = ((uint32_t)sys_now()) + (2000);
+//		}
 
 //		pio_toggle_pin(MDM_ONOFF_IDX);
 //		pio_toggle_pin(MDM_ENABLE_IDX);

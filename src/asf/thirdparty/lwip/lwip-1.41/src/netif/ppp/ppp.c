@@ -741,7 +741,9 @@ pppAppend(u_char c, struct pbuf *nb, ext_accm *outACCM)
    * Sure we don't quite fill the buffer if the character doesn't
    * get escaped but is one character worth complicating this? */
   /* Note: We assume no packet header. */
-  if (nb && (PBUF_POOL_BUFSIZE - nb->len) < 2) {
+  //if (nb && (PBUF_POOL_BUFSIZE - nb->len) < 2) {
+  // TODO: Hardcoded to prevent NO FREE MBUFS error
+  if (nb && (10 - nb->len) < 2) {
     tb = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
     if (tb) {
       nb->next = tb;
@@ -1931,7 +1933,9 @@ pppInProc(PPPControlRx *pcrx, u_char *s, int l)
           break;
         case PDDATA:                    /* Process data byte. */
           /* Make space to receive processed data. */
-          if (pcrx->inTail == NULL || pcrx->inTail->len == PBUF_POOL_BUFSIZE) {
+          //if (pcrx->inTail == NULL || pcrx->inTail->len == PBUF_POOL_BUFSIZE) {
+        	// TODO: Hardcoded to prevent NO FREE MBUFS error
+        	if (pcrx->inTail == NULL || pcrx->inTail->len == 10) {
             if (pcrx->inTail != NULL) {
               pcrx->inTail->tot_len = pcrx->inTail->len;
               if (pcrx->inTail != pcrx->inHead) {

@@ -7,20 +7,22 @@
 
 #ifndef MODEM_H_
 #define MODEM_H_
+#include "FreeRTOS.h"
+#include "semphr.h"
 #include "freertos_usart_serial.h"
 
 /* Dimensions the buffer into which input characters are placed. */
-#define MAX_INPUT_SIZE          50
+#define MAX_INPUT_SIZE          128
 
 /* The size of the buffer provided to the USART driver for storage of received
  * bytes. */
-#define RX_BUFFER_SIZE_BYTES    (50)
+#define RX_BUFFER_SIZE_BYTES    (128)
 
 /* Baud rate to use. */
 #define DIALER_BAUD_RATE           115200
 
 /* The USART instance used for input and output. */
-static freertos_usart_if modem_usart;
+extern freertos_usart_if modem_usart;
 
 
 typedef enum
@@ -34,11 +36,17 @@ typedef enum
 }sys_result;
 
 uint8_t modem_init(void);
+uint8_t modem_connect(void);
 
 
 typedef struct {
 	uint8_t type;
 
 } dialer_cmd_t;
+
+xSemaphoreHandle config_signal;
+
+uint8_t modem_config(void);
+uint32_t read_modem(void);
 
 #endif /* MODEM_H_ */
