@@ -1,4 +1,8 @@
 
+#include <stdio.h>
+#include <string.h>
+
+
 #include "FreeRTOS.h"
 #include "task.h"
 #include "timers.h"
@@ -6,10 +10,10 @@
 #include "conf_board.h"
 #include "cli_tasks.h"
 #include "dialer.h"
+#include "comm.h"
 #include "sysclk.h"
 #include "ppp.h"
-#include <stdio.h>
-#include <string.h>
+
 
 
 
@@ -53,12 +57,14 @@ delete-task:
 /* The priorities at which various tasks will get created. */
 #define mainUART_CLI_TASK_PRIORITY              (tskIDLE_PRIORITY + 1)
 #define mainLED_TASK_PRIORITY					(tskIDLE_PRIORITY + 1)
+#define mainCOMM_TASK_PRIORITY					(tskIDLE_PRIORITY + 1)
 #define mainDIALER_TASK_PRIORITY				(tskIDLE_PRIORITY + 1)
 
 /* The stack sizes allocated to the various tasks. */
 #define mainUART_CLI_TASK_STACK_SIZE    		(configMINIMAL_STACK_SIZE * 2)
 #define mainLED_TASK_STACK_SIZE					(configMINIMAL_STACK_SIZE * 2)
 #define mainDIALER_TASK_STACK_SIZE				(1024)
+#define mainCOMM_TASK_STACK_SIZE				(1024)
 
 
 // TODO: REVIEW STACK SIZE ALLOCATION
@@ -156,8 +162,11 @@ int main(void) {
 
 	printf("create_uart_cli_task\r\n");
 	create_uart_cli_task(CONSOLE_UART, mainUART_CLI_TASK_STACK_SIZE, mainUART_CLI_TASK_PRIORITY);
-	printf("create_dialer_task\r\n");
-	create_dialer_task(mainDIALER_TASK_STACK_SIZE, mainDIALER_TASK_PRIORITY);
+//	printf("create_dialer_task\r\n");
+//	create_dialer_task(mainDIALER_TASK_STACK_SIZE, mainDIALER_TASK_PRIORITY);
+
+	printf("create_comm_task\r\n");
+	create_comm_task(mainCOMM_TASK_STACK_SIZE, mainCOMM_TASK_PRIORITY);
 	printf("create_led_task\r\n");
 	create_led_task();
 

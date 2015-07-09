@@ -24,6 +24,7 @@
 #include "modem.h"
 #include "dialer.h"
 #include "ppp.h"
+#include "comm.h"
 
 static volatile bool cmd_dial = false;
 
@@ -141,8 +142,14 @@ static void ppp_dialer_task(void *pvParameters)
 
 	printf("modem_init\r\n");
 	modem_init();
-	printf("modem_connect\r\n");
-	modem_connect();
+	printf("comm_connect\r\n");
+
+
+	comm_connect();
+
+	comm_http();
+
+
 
 
 

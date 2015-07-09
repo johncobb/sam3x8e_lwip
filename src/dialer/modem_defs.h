@@ -10,7 +10,8 @@
 
 #include "modem.h"
 
-typedef void (*callback_func_t)(void);
+typedef void (*modem_func_t) (void);
+typedef sys_result (*callback_func_t)(void);
 typedef void (*callback_funcex_t)(char * token, uint8_t seconds, sys_result *result);
 
 typedef struct
@@ -24,6 +25,14 @@ typedef struct
 
 typedef struct
 {
+	modem_func_t fnc_handler;
+	uint32_t timeout;
+	uint8_t retries;
+	callback_func_t fnc_callback;
+}at_modem_cmd_t;
+
+typedef struct
+{
 	uint8_t *cmd;
 	char *result;
 	uint32_t timeout;
@@ -32,13 +41,15 @@ typedef struct
 }at_command_cnx_t;
 
 
+
+
 typedef struct
 {
 	uint8_t busy;
 	uint8_t context;
 	uint8_t signal;
 	uint8_t creg;
-	uint8_t connected;
+	modem_cnx_status connection;
 }modem_status_t;
 
 
@@ -59,6 +70,7 @@ extern modem_status_t modem_status;
 #define MODEM_TOKEN_PROMPT			">"
 #define MODEM_TOKEN_CMGS			"+CMGS:"
 #define MODEM_TOKEN_CREG			"+CREG:"
+#define MODEM_TOKEN_CSQ				"+CSQ:"
 #define MODEM_TOKEN_MONI			"#MONI:"
 #define MODEM_TOKEN_GPRS_ACT		"+IP:"
 #define MODEM_TOKEN_SGACT			"#SGACT:"
@@ -66,6 +78,8 @@ extern modem_status_t modem_status;
 #define MODEM_TOKEN_CMGL			"+CMGL:"
 #define MODEM_TOKEN_CMGR			"+CMGR:"
 #define MODEM_TOKEN_REMOTECMD		"$"
+#define MODEM_TOKEN_HTTPOK			"HTTP/1.1 200 OK"
+
 
 
 
@@ -87,27 +101,44 @@ extern modem_status_t modem_status;
 #define MODEM_CMD_GAUTH				"AT#GAUTH=0\r"
 #define MODEM_CMD_QUERYNETWORK		"AT+CREG?\r"
 #define MODEM_CMD_QUERYSIGNAL		"AT+CSQ?\r"
-#define MODEM_CMD_SETCONTEXT		"AT+CGDCONT=1,\"IP\",\"c1.korem2m.com\"\r"
-//#define MODEM_CMD_SETCONTEXT		"AT+CGDCONT=1,\"IP\",\"a10.korem2m.com\"\r"
+#define MODEM_CMD_MOBILEEQUIPERR	"AT+CMEE=2\r"
+
+
+#define MODEM_CMD_SETCONTEXT		"AT+CGDCONT=1,\"IP\",\"a10.korem2m.com\"\r"
 #define MODEM_CMD_DIAL				"ATD*99***1#\r"
 
+//#define MODEM_CMD_SETCONTEXT		"AT+CGDCONT=1,\"IP\",\"c1.korem2m.com\"\r"
+#define MODEM_CMD_ACTIVATECONTEXT	"AT#SGACT=1,1\r"
 #define MODEM_CMD_QUERYCONTEXT		"AT#SGACT?\r"
 #define MODEM_CMD_DEACTCONTEXT		"AT#SGACT=1,0\r"
-#define MODEM_CMD_DEACTGPRS			"AT#GPRS=0\r" // UNUSED: FAVOR OF CMD_DEACT_CONTEXT
-#define MODEM_CMD_ACTGPRS			"AT#GPRS=1\r" // UNUSED: FAVOR OF CMD_ACT_CONTEXT
 #define MODEM_CMD_LISTENUDP			"AT#SLUDP=1,1,3500\r"
-
+#define MODEM_CMD_SKIPESC			"AT#SKIPESC=1\r"
+#define MODEM_CMD_SOCKETCFG			"AT#SCFG=1,1,512,90,600,2\r"
+#define MODEM_CMD_AUTOCTX			"AT#SGACTCFG=1,3\r"
 #define MODEM_CMD_SENDSMS			"AT+CMGS=\"8126290240\"\r\nHello World\r\n\032"
 
 
 
 
-#define MODEM_CMD_SETBAND		"AT#BND=1\r"	// 850/1900 default
-//#define MODEM_CMD_SETCONTEXT	"AT+CGDCONT=1,\"IP\",\"%s\"\r"
-//#define CMD_USERID			"AT#USERID=\"\"\r"
-//#define CMD_PASSWORD			"AT#PASSW=\"\"\r"
-//#define MODEM_CMD_USERID2		"AT#USERID=\"%s\"\r"
-//#define MODEM_CMD_PASSWORD2		"AT#PASSW=\"%s\"\r"
+#define MODEM_CMD_SETBAND			"AT#BND=1\r"	// 850/1900 default
+//#define MODEM_CMD_SETCONTEXT		"AT+CGDCONT=1,\"IP\",\"%s\"\r"
+#define MODEM_CMD_SETUSERID			"AT#USERID=\"\"\r"
+#define MODEM_CMD_SETPASSWORD		"AT#PASSW=\"\"\r"
+//#define MODEM_CMD_SETUSERID		"AT#USERID=\"%s\"\r"
+//#define MODEM_CMD_SETPASSWORD	"AT#PASSW=\"%s\"\r"
+
+// socket udp commands
+#define MODEM_CMD_UDPSOCKETOPEN		"AT#SD=1,1,2012,\"vq1.cphandheld.com\"\r"
+#define MODEM_CMD_UDPSOCKETCLOSE	"AT#SH=1\r"
+#define MODEM_CMD_UDPSOCKETRESUME	"AT#SO=1\r"
+#define MODEM_CMD_UDPSOCKETSUSPEND	"+++"
+
+// socket http commands
+#define MODEM_CMD_HTTPSOCKETOPEN		"AT#SD=1,0,80,\"www.google.com\",0,0\r"
+#define MODEM_CMD_HTTPSOCKETCLOSE		"AT#SH=1\r"
+#define MODEM_CMD_HTTPSOCKETRESUME		"AT#SO=1\r"
+#define MODEM_CMD_HTTPSOCKETSUSPEND		"+++"
+#define MODEM_CMD_HTTPSOCKETGET			"GET / HTTP/1.1\r\nHost: www.google.com\r\nConnection: keep-alive\r\n\r\n"
 
 
 

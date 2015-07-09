@@ -35,8 +35,17 @@ typedef enum
 	SYS_ERR_FAIL_OTHERS
 }sys_result;
 
-uint8_t modem_init(void);
+typedef enum
+{
+	CNX_CLOSED = 0,
+	CNX_OPENED,
+	CNX_SUSPENDED
+}modem_cnx_status;
+
+sys_result modem_init(void);
 uint8_t modem_connect(void);
+uint8_t modem_udpsocket(void);
+uint8_t modem_httpsocket(void);
 
 
 typedef struct {
@@ -46,7 +55,10 @@ typedef struct {
 
 xSemaphoreHandle config_signal;
 
-uint8_t modem_config(void);
+sys_result modem_config(void);
 uint32_t read_modem(void);
+sys_result handle_result(char * token, char ** ptr_out, uint32_t millis);
+void SEND_AT(uint8_t *cmd);
+void SEND_RAW(uint8_t *cmd);
 
 #endif /* MODEM_H_ */

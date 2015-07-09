@@ -14,8 +14,10 @@
 #include "freertos_usart_serial.h"
 #include "board.h"
 #include "sys_arch.h"
+#include "telit_modem_api.h"
 
-#define RX_BUFFER_LEN		32
+
+#define RX_BUFFER_LEN		128
 
 freertos_usart_if modem_usart;
 
@@ -26,34 +28,26 @@ xSemaphoreHandle config_signal = 0;
 void basic_handler(void);
 
 void pause(void);
-static void handle_set_context(char * token, uint8_t seconds, sys_result *result);
-
-static void handle_query_context(void);
-static void handle_dial(void);
 
 
-const at_command_t at_commands[] =
+at_modem_cmd_t at_cfg_commands[] =
 {
-		{MODEM_CMD_ATZ, 		MODEM_TOKEN_OK, 50, 3, NULL},
-		{MODEM_CMD_ECHOOFF, 	MODEM_TOKEN_OK, 50, 3, NULL},
-		{MODEM_CMD_AT, 			MODEM_TOKEN_OK, 50, 3, NULL},
-		{MODEM_CMD_SELINT,		MODEM_TOKEN_OK, 50, 3, NULL},
-		{MODEM_CMD_MSGFMT, 		MODEM_TOKEN_OK, 50, 3, NULL},
-		//{MODEM_CMD_SETBAND,		MODEM_TOKEN_OK, 1, 3, NULL},
-		{MODEM_CMD_CFUN, 		MODEM_TOKEN_OK, 50, 3, NULL},
-		{MODEM_CMD_CREG, 		MODEM_TOKEN_OK, 50, 3, NULL},
-		{MODEM_CMD_GAUTH, 		MODEM_TOKEN_OK, 50, 3, NULL},
-		{MODEM_CMD_SETCONTEXT, 	MODEM_TOKEN_OK, 2000, 3, NULL},
-		//{MODEM_CMD_DIAL, 		MODEM_TOKEN_CONNECT, 3, 3, NULL},
-		{NULL, NULL, 0, 0, NULL}
+		// fnc_handler, timeout, retries, fnc_callback
+		{modem_factory, 		0, 0, NULL},
+		{modem_echooff, 		0, 0, NULL},
+		{modem_setinterface, 	0, 0, NULL},
+		{modem_setmsgformat, 	0, 0, NULL},
+		//{modem_setband, 		0, 0, NULL},
+		{modem_setcontext, 		0, 0, NULL},
+		{modem_setuserid, 		0, 0, NULL},
+		{modem_setpassword, 	0, 0, NULL},
+		{modem_skipesc, 		0, 0, NULL},
+		{modem_socketconfig, 	0, 0, NULL},
+		{modem_mobileequiperr, 	0, 0, NULL},
+		{NULL, 0, 0, NULL}
 };
 
-const at_command_cnx_t at_connect_commands[] =
-{
-		{MODEM_CMD_QUERYNETWORK, MODEM_TOKEN_CREG, 50, 3, NULL},
-		{MODEM_CMD_DIAL, MODEM_TOKEN_CONNECT, 5000, 3, NULL},
-		{NULL, NULL, 0, 0, NULL},
-};
+
 
 void basic_handler(void)
 {
@@ -68,34 +62,6 @@ void pause(void)
 }
 
 
-static void handle_query_context(void)
-{
-
-}
-
-static void handle_dial(void)
-{
-
-}
-
-
-
-
-// human readable version of at commands
-// these commands include the additional linefeed so we
-// can read the output via a terminal session
-//const at_command_t at_commands[] =
-//{
-//		{"AT\r\n", 				MODEM_TOKEN_OK, 3, 3},
-//		{"ATE0\r\n", 			MODEM_TOKEN_OK, 3, 3},
-//		{"AT+CFUN=1\r\n", 		MODEM_TOKEN_OK, 3, 3},
-//		{"AT+CREG=1\r\n", 		MODEM_TOKEN_OK, 3, 3},
-//		{"AT#GAUTH=0\r\n", 		MODEM_TOKEN_OK, 3, 3},
-//		{"AT+CGDCONT=1,\"IP\",\"c1.korem2m.com\"\r\n", 	MODEM_TOKEN_OK, 3, 3},
-//		{"ATD*99***1#\r\n", 	MODEM_TOKEN_CONNECT, 3, 3},
-//		{NULL, NULL, 0, 0}
-//};
-
 
 
 /* The buffer provided to the USART driver to store incoming character in. */
@@ -103,22 +69,8 @@ static uint8_t receive_buffer[RX_BUFFER_SIZE_BYTES] = {0};
 
 static void init_hw(void);
 static void init_usart(Usart *usart_base);
-static void SEND_AT(uint8_t *cmd);
-static sys_result handle_result(char * token, char ** ptr_out, uint32_t millis);
-
-static void handle_set_context(char * token, uint8_t seconds, sys_result *result)
-{
-	char * ptr = NULL;
 
 
-	sys_result sys_status = handle_result(token, &ptr, seconds);
-
-	if(sys_status == SYS_AT_OK) {
-		// handle the parsing
-	}
-
-	result = &sys_status;
-}
 
 //uint32_t pow_mon = pio_get_pin_value(MDM_POWMON_IDX);
 //uint32_t pow_mon2 = pio_get(PIOC, PIO_TYPE_PIO_INPUT, PIO_PC25);
@@ -185,8 +137,7 @@ void init_hw(void)
 }
 
 
-
-uint8_t modem_init(void)
+sys_result modem_init(void)
 {
 	// hardware must be initialized before usart
 	init_hw();
@@ -197,30 +148,33 @@ uint8_t modem_init(void)
 	// init usart
 	init_usart(MODEM_USART);
 
+	return SYS_OK;
+}
 
-
-	const at_command_t* at_cmd = &(at_commands[0]);
-	SEND_AT((uint8_t*)at_cmd->cmd);
+sys_result modem_config(void)
+{
+	at_modem_cmd_t * at_cmd = &(at_cfg_commands[0]);
 
 	printf("wait 1s.\r\n");
 	vTaskDelay(1000);
 
-	while(at_cmd->cmd != NULL)
+	while(at_cmd->fnc_handler != NULL)
 	{
-		printf("SENDING %s\r\n", at_cmd->cmd);
-		SEND_AT((uint8_t*)at_cmd->cmd);
 
+		// dispatch the function
+		at_cmd->fnc_handler();
 
+		// advance to next command
 		at_cmd++;
 
 		char * ptr = NULL;
 
 		sys_result sys_status;
 
-		if(at_cmd->callback != NULL) {
-			at_cmd->callback(at_cmd->result, at_cmd->timeout, &sys_status);
+		if(at_cmd->fnc_callback != NULL) {
+			at_cmd->fnc_callback();
 		} else {
-			sys_status = handle_result(at_cmd->result, &ptr,  at_cmd->timeout);
+			sys_status = handle_result(MODEM_TOKEN_OK, &ptr,  1000);
 		}
 
 		vTaskDelay(50);
@@ -241,81 +195,8 @@ uint8_t modem_init(void)
 			//return SYS_ERR_AT_FAIL;
 		}
 
-//		for(int r_time=0; r_time< at_cmd->retries; r_time++) {
-//			SEND_AT(at_cmd->cmd);
-//			if(handle_result(at_cmd->result, &ptr, at_cmd->timeout) == SYS_OK) {
-//				printf("token found\r\n");
-//			}
-//		}
-
 	}
 
-	return SYS_OK;
-}
-
-uint8_t  modem_connect(void)
-{
-	uint8_t cnx_state_index = 0;
-	uint8_t retries = 0;
-
-
-	char * ptr = NULL;
-	sys_result sys_status;
-
-	printf("registering");
-	while(true)
-	{
-		const at_command_cnx_t* at_cmd = &(at_connect_commands[cnx_state_index]);
-
-		if(cnx_state_index == 0) {
-			SEND_AT((uint8_t*)at_cmd->cmd);
-
-			// Example Response "+CREG: 0,0" // Module not registered not searching
-			// Example Response "+CREG: 0,1" // Module registered on network
-			// Example Response "+CREG: 0,2" // Module searching for network
-			// Example Response "+CREG: 0,3" // Module registration denied
-			// Example Response "+CREG: 0,4" // Module state unknown
-			// Example Response "+CREG: 0,5" // Module registered roaming
-			sys_status = handle_result(at_cmd->result, &ptr, at_cmd->timeout);
-			retries++;
-
-			if(sys_status == SYS_AT_OK) {
-				printf(".");
-				//printf("buffer:%s\r\n", ptr);
-				ptr+=9;
-				modem_status.creg = ((ptr[0]-'0'));
-				//printf("creg: %d\r\n", modem_status.creg);
-				if(modem_status.creg == 1) {
-					printf("\r\nsuccess!\r\nconnecting...\r\n");
-					cnx_state_index++;
-					retries = 0;
-				}
-			}
-		} else if (cnx_state_index == 1) {
-
-			SEND_AT((uint8_t*)at_cmd->cmd);
-
-			sys_status = handle_result(at_cmd->result, &ptr, at_cmd->timeout);
-
-			if(sys_status == SYS_AT_OK) {
-				//printf("buffer:%s\r\n", ptr);
-				modem_status.connected = true;
-				printf("connected :p\r\n");
-				printf("%s\r\n", ptr);
-				break;
-			}
-		}
-
-		vTaskDelay(500);
-	}
-
-	return SYS_OK;
-
-}
-
-// example function called from cli
-uint8_t modem_config(void)
-{
 	return SYS_OK;
 }
 
@@ -352,7 +233,24 @@ static void init_usart(Usart *usart_base)
 }
 
 
-static void SEND_AT(uint8_t *cmd)
+void SEND_AT(uint8_t *cmd)
+{
+	uint8_t *output_string;
+
+	portTickType max_block_time_ticks = 200UL / portTICK_RATE_MS;
+
+	static char * tmp_buffer[400];
+
+	output_string = (uint8_t *) tmp_buffer;
+
+	strcpy((char *) output_string, (char *) cmd);
+
+	freertos_usart_write_packet(modem_usart, output_string,
+								strlen((char *) cmd),
+								max_block_time_ticks);
+}
+
+void SEND_RAW(uint8_t *cmd)
 {
 	uint8_t *output_string;
 
@@ -378,7 +276,7 @@ char * ptr = NULL;
 uint32_t bytes_received;
 uint8_t rx_buffer[RX_BUFFER_LEN+1];
 
-static sys_result handle_result(char * token, char ** ptr_out, uint32_t millis)
+sys_result handle_result(char * token, char ** ptr_out, uint32_t millis)
 {
 
 	portTickType max_wait_millis = millis / portTICK_RATE_MS;
