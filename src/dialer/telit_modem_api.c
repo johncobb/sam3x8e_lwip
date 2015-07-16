@@ -4,10 +4,14 @@
  *  Created on: Jul 7, 2015
  *      Author: jcobb
  */
+#include <stdio.h>
+#include <string.h>
+
 #include "telit_modem_api.h"
 #include "modem_defs.h"
 #include "modem.h"
 #include "wan_msg.h"
+
 
 
 void modem_factory(void)
@@ -60,6 +64,16 @@ void modem_socketconfig(void)
 	SEND_AT(MODEM_CMD_SOCKETCFG);
 }
 
+void modem_socketconfigex(modem_socket_t *socket)
+{
+	memset(scratch_buffer, '\0', SCRATCH_BUFFER_LEN);
+
+	sprintf(scratch_buffer, MODEM_CMD_SOCKETCFGEX, socket->cnx_id, socket->ctx_id, socket->pkt_size, socket->glb_timeout, socket->cnx_timeout, socket->tx_timeout);
+	SEND_AT(scratch_buffer);
+	printf(scratch_buffer);
+
+}
+
 void modem_querycontext(void)
 {
 	SEND_AT(MODEM_CMD_QUERYCONTEXT);
@@ -88,6 +102,71 @@ void modem_querysignal(void)
 void modem_mobileequiperr(void)
 {
 	SEND_AT(MODEM_CMD_MOBILEEQUIPERR);
+}
+
+// modem socket functions: open, suspend, resume, close
+void modem_socketopen(modem_socket_t *socket)
+{
+	memset(scratch_buffer, '\0', SCRATCH_BUFFER_LEN);
+	// "AT#SD=1,0,80,\"www.google.com\"\r"
+	sprintf(scratch_buffer, MODEM_CMD_SOCKETOPEN, socket->cnx_id, socket->socket_conf.type, socket->socket_conf.port, MODEM_DEFAULT_HTTPSERVER);
+	SEND_AT(scratch_buffer);
+	printf(scratch_buffer);
+	printf("\r\n");
+}
+
+void modem_socketsuspend(modem_socket_t *socket)
+{
+	// "+++"
+	SEND_AT(MODEM_CMD_SOCKETSUSPEND);
+}
+
+void modem_socketwrite(modem_socket_t *socket, uint8_t * cmd)
+{
+	SEND_RAW(cmd);
+}
+
+void modem_socketresume(modem_socket_t *socket)
+{
+	memset(scratch_buffer, '\0', SCRATCH_BUFFER_LEN);
+	// "AT#SO=1\r"
+	sprintf(scratch_buffer, MODEM_CMD_SOCKETRESUME, socket->cnx_id);
+	SEND_AT(scratch_buffer);
+	printf(scratch_buffer);
+}
+
+void modem_socketclose(modem_socket_t *socket)
+{
+
+	memset(scratch_buffer, '\0', SCRATCH_BUFFER_LEN);
+	// "AT#SH=1\r"
+	sprintf(scratch_buffer, MODEM_CMD_SOCKETCLOSE, socket->cnx_id);
+	SEND_AT(scratch_buffer);
+	printf(scratch_buffer);
+}
+
+void modem_socketlisten(modem_socket_t *socket)
+{
+	memset(scratch_buffer, '\0', SCRATCH_BUFFER_LEN);
+	// "AT#SL=1,0,8080"
+	sprintf(scratch_buffer, MODEM_CMD_SOCKETLISTEN, socket->cnx_id, socket->socket_conf.type, socket->socket_conf.port);
+	SEND_AT(scratch_buffer);
+	printf(scratch_buffer);
+}
+
+void modem_socketaccept(modem_socket_t *socket)
+{
+	memset(scratch_buffer, '\0', SCRATCH_BUFFER_LEN);
+	// "AT#SA=1\r"
+	sprintf(scratch_buffer, MODEM_CMD_SOCKETACCEPT, socket->cnx_id);
+	SEND_AT(scratch_buffer);
+	printf(scratch_buffer);
+}
+
+void modem_socketstatus(modem_socket_t *socket)
+{
+	// "AT#SS"
+	SEND_AT(MODEM_CMD_SOCKETSTATUS);
 }
 
 void modem_udpsocketopen(void)
@@ -172,10 +251,14 @@ sys_result modem_handle_querycontext(void)
 
 	// example result: #SGACT: 1,0
 	if(sys_status == SYS_AT_OK) {
-		printf("buffer:%s\r\n", ptr);
+		printf(".");
+		//printf("buffer:%s\r\n", ptr);
 		ptr+=10;
 		modem_status.context = ((ptr[0]-'0'));
 		//printf("creg: %d\r\n", modem_status.creg);
+		if(modem_status.context == 1) {
+			printf("\r\ncontext active.\r\n");
+		}
 	}
 
 	return sys_status;
@@ -246,6 +329,129 @@ sys_result modem_handle_querysignal(void)
 
 	return sys_status;
 
+}
+
+sys_result modem_handle_socketopen(void)
+{
+	char * ptr = NULL;
+	sys_result sys_status;
+
+	sys_status = handle_result(MODEM_TOKEN_CONNECT, &ptr, MODEM_DEFAULT_SOCKETOPEN_TIMEOUT);
+
+	printf("buffer:%s\r\n", ptr);
+
+	if(sys_status == SYS_AT_OK) {
+		modem_status.connection = CNX_OPENED;
+		printf("socket open.\r\n");
+	}
+
+	return sys_status;
+}
+
+sys_result modem_handle_socketclose(void)
+{
+	char * ptr = NULL;
+	sys_result sys_status;
+
+	sys_status = handle_result(MODEM_TOKEN_OK, &ptr, 2500);
+
+	if(sys_status == SYS_AT_OK) {
+		modem_status.connection = CNX_CLOSED;
+		printf("socket closed.\r\n");
+	}
+
+	return sys_status;
+
+}
+
+sys_result modem_handle_socketresume(void)
+{
+	char * ptr = NULL;
+	sys_result sys_status;
+
+	sys_status = handle_result(MODEM_TOKEN_CONNECT, &ptr, 5000);
+
+	if(sys_status == SYS_AT_OK) {
+		modem_status.connection = CNX_OPENED;
+		printf("socket opened.\r\n");
+	}
+
+	return sys_status;
+
+}
+
+sys_result modem_handle_socketsuspend(void)
+{
+	char * ptr = NULL;
+	sys_result sys_status;
+
+	sys_status = handle_result(MODEM_TOKEN_OK, &ptr, MODEM_DEFAULT_SOCKETSUSPEND_TIMEOUT);
+
+	if(sys_status == SYS_AT_OK) {
+		modem_status.connection = CNX_SUSPENDED;
+		printf("socket suspended.\r\n");
+	}
+
+	return sys_status;
+
+}
+
+//sys_result modem_handle_socketwrite(char * token)
+//{
+//	char * ptr = NULL;
+//	sys_result sys_status;
+//
+//	// TODO: NEED TO REVISE BASED UPON PROTOCOL
+//	sys_status = handle_result(token, &ptr, MODEM_DEFAULT_SOCKETWRITE_TIMEOUT);
+//
+//	printf("buffer:%s\r\n", ptr);
+//
+//	if(sys_status == SYS_AT_OK) {
+//		printf("socket write.\r\n");
+//	}
+//
+//	return sys_status;
+//}
+
+sys_result modem_handle_socketwrite(modem_socket_t *socket)
+{
+	socket->bytes_received = handle_stream(socket->data_buffer, SOCKET_BUFFER_LEN, MODEM_DEFAULT_SOCKETWRITE_TIMEOUT);
+
+	//printf("socket->bytes_received=%lu\r\n", socket->bytes_received);
+	return SYS_OK;
+}
+
+uint8_t modem_handle_socketstatus(modem_socket_t *socket)
+{
+	char * ptr = NULL;
+	sys_result sys_status;
+
+	sys_status = handle_result(MODEM_TOKEN_OK, &ptr, 1000);
+
+	printf("buffer:%s\r\n", ptr);
+
+	/*
+	 * example result:
+	#SS: 1,4,217.201.131.110,21
+	#SS: 2,2,217.201.131.110,1033,194.185.15.73,10510
+	#SS: 3,3,217.201.131.110,1034,194.185.15.73,10510
+	#SS: 4,1,217.201.131.110,1035,194.185.15.73,10510
+	#SS: 5,0
+	#SS: 6,0
+	 */
+
+	// TODO: RECURSIVLEY PARSE FOR TOKEN MODEM_TOKEN_SOCKETSTATUS
+	uint8_t socket_index = 0;
+
+	if(sys_status == SYS_AT_OK) {
+		printf("buffer:%s\r\n", ptr);
+		ptr+=7;
+		modem_sockets[socket_index].socket_status = ((ptr[0]-'0'));
+
+		//printf("creg: %d\r\n", modem_status.creg);
+	}
+
+	return sys_status;
 }
 
 

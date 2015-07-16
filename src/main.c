@@ -64,7 +64,7 @@ delete-task:
 #define mainUART_CLI_TASK_STACK_SIZE    		(configMINIMAL_STACK_SIZE * 2)
 #define mainLED_TASK_STACK_SIZE					(configMINIMAL_STACK_SIZE * 2)
 #define mainDIALER_TASK_STACK_SIZE				(1024)
-#define mainCOMM_TASK_STACK_SIZE				(1024)
+#define mainCOMM_TASK_STACK_SIZE				(2048)
 
 
 // TODO: REVIEW STACK SIZE ALLOCATION

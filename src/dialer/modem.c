@@ -15,11 +15,15 @@
 #include "board.h"
 #include "sys_arch.h"
 #include "telit_modem_api.h"
+#include "http_handler.h"
 
 
 #define RX_BUFFER_LEN		128
 
 freertos_usart_if modem_usart;
+
+uint8_t modem_rx_buffer_index = 0;
+static uint8_t modem_rx_buffer[MODEM_RX_BUFFER_SIZE+1] = {0};
 
 modem_status_t modem_status;
 
@@ -30,24 +34,30 @@ void basic_handler(void);
 void pause(void);
 
 
-at_modem_cmd_t at_cfg_commands[] =
+
+//"AT#SCFG=1,1,512,90,600,2\r"
+modem_socket_t modem_sockets[] =
 {
-		// fnc_handler, timeout, retries, fnc_callback
-		{modem_factory, 		0, 0, NULL},
-		{modem_echooff, 		0, 0, NULL},
-		{modem_setinterface, 	0, 0, NULL},
-		{modem_setmsgformat, 	0, 0, NULL},
-		//{modem_setband, 		0, 0, NULL},
-		{modem_setcontext, 		0, 0, NULL},
-		{modem_setuserid, 		0, 0, NULL},
-		{modem_setpassword, 	0, 0, NULL},
-		{modem_skipesc, 		0, 0, NULL},
-		{modem_socketconfig, 	0, 0, NULL},
-		{modem_mobileequiperr, 	0, 0, NULL},
-		{NULL, 0, 0, NULL}
+		// cnx_id, ctx_id, pkt_size, glb_timeout, cnx_timeout (tenths of second), tx_timeout (tenths of second)
+		// socket_status
+		// protocol, address, port
+		// function_handler, data_buffer, bytes_received
+		{1, 1, 512, 90, 600, 2, 0, {SOCKET_TCP, SOCKET_PROT_HTTP, 80}, http_handle_data, {0}, 0},
+		{2, 1, 512, 90, 600, 2, 0, {SOCKET_TCP, SOCKET_PROT_TCP, 80}, NULL, {0}, 0},
+//		{3, 1, 512, 90, 600, 2},
+//		{4, 1, 512, 90, 600, 2},
+//		{5, 1, 512, 90, 600, 2},
+//		{6, 1, 512, 90, 600, 2},
+		{0, 0, 0, 0, 0}
+
 };
 
 
+
+void reset_rx_buffer(void)
+{
+	memset(modem_rx_buffer, '\0', sizeof(modem_rx_buffer));
+}
 
 void basic_handler(void)
 {
@@ -151,37 +161,106 @@ sys_result modem_init(void)
 	return SYS_OK;
 }
 
-sys_result modem_config(void)
+//sys_result modem_config(uint8_t config_index)
+//{
+//	at_modem_cmd_t * at_cmd = &(at_cfg_commands[config_index]);
+//
+//	printf("wait .5s\r\n");
+//	vTaskDelay(500);
+//
+//	while(at_cmd->fnc_handler != NULL)
+//	{
+//
+//		// sanity check here
+//		// if we've reached the end of the array all config functions have been called
+//		// so return SYS_CONFIG_OK
+//		if(at_cmd->fnc_handler == NULL) return SYS_CONFIG_OK;
+//
+//		// dispatch the function
+//		at_cmd->fnc_handler();
+//
+//		// advance to next command
+//		at_cmd++;
+//
+//		char * ptr = NULL;
+//
+//		sys_result sys_status;
+//
+//		if(at_cmd->fnc_callback != NULL) {
+//			at_cmd->fnc_callback();
+//		} else {
+//			sys_status = handle_result(MODEM_TOKEN_OK, &ptr,  1000);
+//		}
+//
+//		vTaskDelay(50);
+//
+//
+//		if(sys_status == SYS_AT_OK) {
+//			//at_cmd++;
+//			printf("SYS_OK\r\n");
+//			printf("buffer:\r\n%s\r\n", ptr);
+//			continue;
+//		} else if (sys_status == SYS_ERR_AT_FAIL) {
+//			printf("SYS_ERR_AT_FAIL\r\n");
+//		} else if (sys_status == SYS_ERR_AT_NOCARRIER) {
+//			printf("SYS_ERR_AT_NO_CARRIER\r\n");
+//		} else if(sys_status == SYS_ERR_AT_TIMEOUT) {
+//			printf("SYS_ERR_AT_TIMEOUT\r\n");
+//			printf("buffer:\r\n%s\r\n", ptr);
+//			//return SYS_ERR_AT_FAIL;
+//		}
+//
+//	}
+//
+//	return SYS_OK;
+//}
+
+
+sys_result modem_config_handler(void)
 {
-	at_modem_cmd_t * at_cmd = &(at_cfg_commands[0]);
+	char * ptr = NULL;
 
-	printf("wait 1s.\r\n");
-	vTaskDelay(1000);
+	sys_result sys_status;
 
-	while(at_cmd->fnc_handler != NULL)
+	sys_status = handle_result(MODEM_TOKEN_OK, &ptr,  10);
+
+	if(sys_status == SYS_AT_OK) {
+		//at_cmd++;
+		printf("SYS_OK\r\n");
+		printf("buffer:\r\n%s\r\n", ptr);
+	} else if (sys_status == SYS_ERR_AT_FAIL) {
+		printf("SYS_ERR_AT_FAIL\r\n");
+	} else if (sys_status == SYS_ERR_AT_NOCARRIER) {
+		printf("SYS_ERR_AT_NO_CARRIER\r\n");
+	} else if(sys_status == SYS_ERR_AT_TIMEOUT) {
+		printf("SYS_ERR_AT_TIMEOUT\r\n");
+		printf("buffer:\r\n%s\r\n", ptr);
+		//return SYS_ERR_AT_FAIL;
+	}
+
+	return sys_status;
+}
+
+
+sys_result configure_sockets(void)
+{
+	printf("configure_sockets...\r\n");
+	modem_socket_t * socket = &(modem_sockets[0]);
+
+	while(socket->cnx_id > 0)
 	{
-
-		// dispatch the function
-		at_cmd->fnc_handler();
-
-		// advance to next command
-		at_cmd++;
-
 		char * ptr = NULL;
 
 		sys_result sys_status;
 
-		if(at_cmd->fnc_callback != NULL) {
-			at_cmd->fnc_callback();
-		} else {
-			sys_status = handle_result(MODEM_TOKEN_OK, &ptr,  1000);
-		}
+		// cnx_id, ctx_id, pkt_size, glb_timeout, cnx_timeout (tenths of second), tx_timeout (tenths of second)
+		modem_socketconfigex(socket);
 
-		vTaskDelay(50);
+		sys_status = handle_result(MODEM_TOKEN_OK, &ptr,  1000);
 
+		socket++;
 
 		if(sys_status == SYS_AT_OK) {
-			//at_cmd++;
 			printf("SYS_OK\r\n");
 			printf("buffer:\r\n%s\r\n", ptr);
 			continue;
@@ -199,6 +278,7 @@ sys_result modem_config(void)
 
 	return SYS_OK;
 }
+
 
 
 
@@ -276,7 +356,59 @@ char * ptr = NULL;
 uint32_t bytes_received;
 uint8_t rx_buffer[RX_BUFFER_LEN+1];
 
+uint32_t modem_handler_async(uint32_t millis)
+{
+	portTickType max_wait_millis = millis / portTICK_RATE_MS;
+
+	uint32_t len = freertos_usart_serial_read_packet(modem_usart, modem_rx_buffer, MODEM_RX_BUFFER_SIZE, max_wait_millis);
+
+	//printf("modem_handler_async: %lu\r\n", len);
+	return len;
+}
+
 sys_result handle_result(char * token, char ** ptr_out, uint32_t millis)
+{
+
+//	if (bytes_received > 0) {
+
+		// SPECIAL CASE FOR HANDLING ASYNCHRONOUS DATA
+		if(token == NULL) {
+			*ptr_out = modem_rx_buffer;
+			return SYS_OK;
+		}
+
+		//if((ptr = strstr(input_string, token))) {
+		if((ptr = strstr(modem_rx_buffer, token))) {
+			if(ptr_out != NULL) {
+				*ptr_out = ptr;
+			}
+			//printf("SYS_AT_OK\r\n");
+			return SYS_AT_OK;
+		} else if ((ptr = strstr(modem_rx_buffer, MODEM_TOKEN_ERROR))) {
+			if(ptr_out != NULL) {
+				*ptr_out = ptr;
+			}
+			printf("SYS_ERR_AT_FAIL\r\n");
+			return SYS_ERR_AT_FAIL;
+		} else if((ptr = strstr(modem_rx_buffer, MODEM_TOKEN_NOCARRIER))) {
+			if(ptr_out != NULL) {
+				*ptr_out = ptr;
+			}
+			printf("SYS_ERR_AT_NOCARRIER\r\n");
+			return SYS_ERR_AT_NOCARRIER;
+		}
+//	}
+
+	// set ptr_out to the rx_buffer for troubleshooting
+	if(ptr_out != NULL) {
+		*ptr_out = modem_rx_buffer;
+	}
+
+//	printf("SYS_ERR_AT_TIMEOUT\r\n");
+//	return SYS_ERR_AT_TIMEOUT;
+}
+
+sys_result handle_result2(char * token, char ** ptr_out, uint32_t millis)
 {
 
 	portTickType max_wait_millis = millis / portTICK_RATE_MS;
@@ -287,21 +419,30 @@ sys_result handle_result(char * token, char ** ptr_out, uint32_t millis)
 
 	if (bytes_received > 0) {
 
+		// SPECIAL CASE FOR HANDLING ASYNCHRONOUS DATA
+		if(token == NULL) {
+			*ptr_out = rx_buffer;
+			return SYS_OK;
+		}
+
 		//if((ptr = strstr(input_string, token))) {
 		if((ptr = strstr(rx_buffer, token))) {
 			if(ptr_out != NULL) {
 				*ptr_out = ptr;
 			}
+			//printf("SYS_AT_OK\r\n");
 			return SYS_AT_OK;
 		} else if ((ptr = strstr(rx_buffer, MODEM_TOKEN_ERROR))) {
 			if(ptr_out != NULL) {
 				*ptr_out = ptr;
 			}
+			printf("SYS_ERR_AT_FAIL\r\n");
 			return SYS_ERR_AT_FAIL;
 		} else if((ptr = strstr(rx_buffer, MODEM_TOKEN_NOCARRIER))) {
 			if(ptr_out != NULL) {
 				*ptr_out = ptr;
 			}
+			printf("SYS_ERR_AT_NOCARRIER\r\n");
 			return SYS_ERR_AT_NOCARRIER;
 		}
 	}
@@ -311,7 +452,18 @@ sys_result handle_result(char * token, char ** ptr_out, uint32_t millis)
 		*ptr_out = rx_buffer;
 	}
 
+	printf("SYS_ERR_AT_TIMEOUT\r\n");
 	return SYS_ERR_AT_TIMEOUT;
+}
+
+
+uint32_t handle_stream(uint8_t *data, uint32_t len, uint32_t millis)
+{
+	portTickType max_wait_millis = millis / portTICK_RATE_MS;
+
+	bytes_received = freertos_usart_serial_read_packet(modem_usart, data, len, max_wait_millis);
+
+	return bytes_received;
 }
 
 uint32_t read_modem(void)

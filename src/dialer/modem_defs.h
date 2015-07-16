@@ -9,26 +9,30 @@
 #define MODEM_DEFS_H_
 
 #include "modem.h"
+#include "modem_defs.h"
 
 typedef void (*modem_func_t) (void);
 typedef sys_result (*callback_func_t)(void);
 typedef void (*callback_funcex_t)(char * token, uint8_t seconds, sys_result *result);
+typedef void (*callback_funcex_t)(char * token, uint8_t seconds, sys_result *result);
+typedef sys_result (*socket_func_t)(uint8_t *data, uint32_t len);
 
-typedef struct
-{
-	uint8_t *cmd;
-	char *result;
-	uint32_t timeout;
-	uint8_t retries;
-	callback_funcex_t callback;
-}at_command_t;
+
+//typedef struct
+//{
+//	uint8_t *cmd;
+//	char *result;
+//	uint32_t timeout;
+//	uint8_t retries;
+//	callback_funcex_t callback;
+//}at_command_t;
 
 typedef struct
 {
 	modem_func_t fnc_handler;
 	uint32_t timeout;
 	uint8_t retries;
-	callback_func_t fnc_callback;
+	bool waitingreply;
 }at_modem_cmd_t;
 
 typedef struct
@@ -52,8 +56,55 @@ typedef struct
 	modem_cnx_status connection;
 }modem_status_t;
 
+typedef struct
+{
+	modem_socket_type type; // SOCKET_TCP, SOCKET_UDP
+	modem_socket_protocol protocol; // SOCKET_PROT_TCP, SOCKET_PROT_HTTP, SOCKET_PROT_UDP
+	uint8_t port;
+//	uint16_t linger_time; // optional
+//	uint16_t local_port; // optional
+
+}modem_socket_conf_t;
+
+#define SOCKET_BUFFER_LEN	128
+// cnx_id, ctx_id, pkt_size, glb_timeout, cnx_timeout (tenths of second), tx_timeout (tenths of second)
+typedef struct
+{
+	uint8_t cnx_id;			// connection id
+	uint8_t ctx_id;			// context id
+	uint16_t pkt_size;		// packet size
+	uint16_t glb_timeout;	// global timeout
+	uint16_t cnx_timeout;	// connection timeout
+	uint16_t tx_timeout;	// transmit timeout
+	uint8_t socket_status;
+	modem_socket_conf_t socket_conf;
+	socket_func_t handle_data;
+	uint8_t data_buffer[SOCKET_BUFFER_LEN+1];
+	uint32_t bytes_received;
+
+}modem_socket_t;
+
+
+
 
 extern modem_status_t modem_status;
+extern modem_socket_t modem_sockets[];
+
+
+#define SCRATCH_BUFFER_LEN			256
+uint8_t scratch_buffer[SCRATCH_BUFFER_LEN];
+
+
+#define MODEM_DEFAULT_HTTPSERVER	"www.google.com"
+#define MODEM_DEFAULT_HTTPREQUEST	"GET / HTTP/1.1\r\nHost: www.google.com\r\nConnection: keep-alive\r\n\r\n"
+#define MODEM_TOKEN_HTTPOK			"HTTP/1.1 200 OK"
+#define MODEM_TOKEN_HTTPFORBIDDEN	"HTTP/1.1 403"
+#define MODEM_TOKEN_HTTPENDOFFILE	"</html>"
+
+#define MODEM_DEFAULT_SOCKETOPEN_TIMEOUT		20000
+#define MODEM_DEFAULT_SOCKETWRITE_TIMEOUT		10000
+#define MODEM_DEFAULT_SOCKETSUSPEND_TIMEOUT		5000
+
 
 
 #define MODEM_RESULT_NODATA			0X00
@@ -77,8 +128,9 @@ extern modem_status_t modem_status;
 #define MODEM_TOKEN_ACK				"ACK"
 #define MODEM_TOKEN_CMGL			"+CMGL:"
 #define MODEM_TOKEN_CMGR			"+CMGR:"
+#define MODEM_TOKEN_SOCKETSTATUS	"#SS:"
 #define MODEM_TOKEN_REMOTECMD		"$"
-#define MODEM_TOKEN_HTTPOK			"HTTP/1.1 200 OK"
+
 
 
 
@@ -114,9 +166,18 @@ extern modem_status_t modem_status;
 #define MODEM_CMD_LISTENUDP			"AT#SLUDP=1,1,3500\r"
 #define MODEM_CMD_SKIPESC			"AT#SKIPESC=1\r"
 #define MODEM_CMD_SOCKETCFG			"AT#SCFG=1,1,512,90,600,2\r"
+#define MODEM_CMD_SOCKETCFGEX		"AT#SCFG=%d,%d,%d,%d,%d,%d\r"
 #define MODEM_CMD_AUTOCTX			"AT#SGACTCFG=1,3\r"
 #define MODEM_CMD_SENDSMS			"AT+CMGS=\"8126290240\"\r\nHello World\r\n\032"
 
+// socket commands
+#define MODEM_CMD_SOCKETOPEN		"AT#SD=%d,%d,%d,\"%s\",0,0\r"
+#define MODEM_CMD_SOCKETCLOSE		"AT#SH=%d\r"
+#define MODEM_CMD_SOCKETRESUME		"AT#SO=%d\r"
+#define MODEM_CMD_SOCKETLISTEN		"AT#SL=%d,%d,%d\r"
+#define MODEM_CMD_SOCKETACCEPT		"AT#SA=%d\r"
+#define MODEM_CMD_SOCKETSUSPEND		"+++"
+#define MODEM_CMD_SOCKETSTATUS		"AT#SS\r"
 
 
 

@@ -18,12 +18,28 @@
  * bytes. */
 #define RX_BUFFER_SIZE_BYTES    (128)
 
+
+#define MODEM_RX_BUFFER_SIZE	(128)
+
+
 /* Baud rate to use. */
 #define DIALER_BAUD_RATE           115200
 
 /* The USART instance used for input and output. */
 extern freertos_usart_if modem_usart;
 
+typedef enum
+{
+	SOCKET_TCP = 0,
+	SOCKET_UDP = 1
+}modem_socket_type;
+
+typedef enum
+{
+	SOCKET_PROT_TCP = 0,
+	SOCKET_PROT_HTTP = 1,
+	SOCKET_PROT_UDP = 2
+}modem_socket_protocol;
 
 typedef enum
 {
@@ -32,7 +48,9 @@ typedef enum
 	SYS_ERR_AT_TIMEOUT,
 	SYS_ERR_AT_NOCARRIER,
 	SYS_ERR_AT_FAIL,
-	SYS_ERR_FAIL_OTHERS
+	SYS_ERR_FAIL_OTHERS,
+	SYS_ERR_FAIL,
+	SYS_CONFIG_OK
 }sys_result;
 
 typedef enum
@@ -42,22 +60,29 @@ typedef enum
 	CNX_SUSPENDED
 }modem_cnx_status;
 
-sys_result modem_init(void);
-uint8_t modem_connect(void);
-uint8_t modem_udpsocket(void);
-uint8_t modem_httpsocket(void);
-
 
 typedef struct {
 	uint8_t type;
 
 } dialer_cmd_t;
 
+
+uint32_t modem_handler_async(uint32_t millis);
+sys_result modem_config_handler(void);
+void reset_rx_buffer(void);
+
+sys_result modem_init(void);
+uint8_t modem_connect(void);
+uint8_t modem_udpsocket(void);
+uint8_t modem_httpsocket(void);
+sys_result configure_sockets(void);
+
 xSemaphoreHandle config_signal;
 
-sys_result modem_config(void);
+sys_result modem_config(uint8_t config_index);
 uint32_t read_modem(void);
 sys_result handle_result(char * token, char ** ptr_out, uint32_t millis);
+uint32_t handle_stream(uint8_t *data, uint32_t len, uint32_t millis);
 void SEND_AT(uint8_t *cmd);
 void SEND_RAW(uint8_t *cmd);
 

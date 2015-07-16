@@ -212,7 +212,7 @@ static const CLI_Command_Definition_t config_command_definition =
 
 void dispatch_config_command(void)
 {
-	modem_config();
+	//modem_config(0);
 	//xSemaphoreGive(config_signal);
 }
 

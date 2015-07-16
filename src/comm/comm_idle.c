@@ -15,11 +15,11 @@ sys_result comm_idle(void)
 {
 	printf("comm_idle\r\n");
 
-	printf("wait 5 sec.\r\n");
-	vTaskDelay(5000);
+	printf("wait 1 sec.\r\n");
+	vTaskDelay(1000);
 
-	sys_result result = SYS_OK;
+	//comm_set_state(COMM_DISPATCH);
 
-	return result;
+	return SYS_OK;
 
 }

@@ -39,8 +39,10 @@ uint8_t modem_udpsocket(void)
 		if(socket_state_index == 0) {
 			at_cmd->fnc_handler();
 
-			sys_result sys_status = at_cmd->fnc_callback();
+			// TODO: HACK
+			//sys_result sys_status = at_cmd->fnc_callback();
 
+			sys_result sys_status;
 			if(sys_status == SYS_AT_OK) {
 				if(socket_state_index == 3)
 					break;
