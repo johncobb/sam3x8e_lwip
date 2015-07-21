@@ -19,8 +19,14 @@ typedef enum
 	COMM_REGISTER_QUERYCONTEXT
 } comm_register_state_t;
 
+typedef enum
+{
+	COMM_REGISTER_INVOKE = 0,
+	COMM_REGISTER_WAITREPLY = 1
+}comm_register_sub_state_t;
+
 static comm_register_state_t _state = COMM_REGISTER_QUERYNETWORK;
-static comm_cmd_state_t _substate = COMM_CMD_DISPATCH;
+static comm_register_sub_state_t _substate = COMM_REGISTER_INVOKE;
 
 static xTimeOutType time_out_definition;
 static portTickType max_wait_millis;
@@ -29,7 +35,7 @@ static uint8_t _retries = 0;
 // prototypes
 static void enter_state(comm_register_state_t state);
 static void exit_state();
-static void enter_substate(comm_cmd_state_t state);
+static void enter_substate(comm_register_sub_state_t state);
 static void exit_substate();
 
 static void set_timeout(uint32_t millis);
@@ -40,7 +46,7 @@ static bool timeout(void);
 static void enter_state(comm_register_state_t state)
 {
 	_state = state;
-	_substate = COMM_CMD_DISPATCH;
+	_substate = COMM_REGISTER_INVOKE;
 	_retries = 0;
 	reset_rx_buffer();
 }
@@ -49,12 +55,12 @@ static void exit_state(void)
 {
 	exit_substate();
 	_state = COMM_REGISTER_QUERYNETWORK;
-	_substate = COMM_CMD_DISPATCH;
+	_substate = COMM_REGISTER_INVOKE;
 	_retries = 0;
 
 }
 
-static void enter_substate(comm_cmd_state_t state)
+static void enter_substate(comm_register_sub_state_t state)
 {
 	_substate = state;
 	_retries = 0;
@@ -62,7 +68,7 @@ static void enter_substate(comm_cmd_state_t state)
 
 static void exit_substate()
 {
-	_substate = COMM_CMD_DISPATCH;
+	_substate = COMM_REGISTER_INVOKE;
 	_retries = 0;
 }
 
@@ -76,7 +82,7 @@ sys_result  comm_register(void)
 
 	if(_state == COMM_REGISTER_QUERYNETWORK) {
 
-		if(_substate == COMM_CMD_DISPATCH) {
+		if(_substate == COMM_REGISTER_INVOKE) {
 
 			// dispatch the function
 			modem_querynetwork();
@@ -84,10 +90,10 @@ sys_result  comm_register(void)
 			//set_timeout(10000);
 
 			// change the _substate so that we can await reply from modem
-			enter_substate(COMM_CMD_WAITREPLY);
+			enter_substate(COMM_REGISTER_WAITREPLY);
 			result = SYS_OK;
 
-		} else if(_substate == COMM_CMD_WAITREPLY) {
+		} else if(_substate == COMM_REGISTER_WAITREPLY) {
 
 			// parse results
 			result = modem_handle_querynetwork();
@@ -100,7 +106,7 @@ sys_result  comm_register(void)
 			} else {
 				// toggle between DISPATCH and WAITREPLY
 				// effectively querying the modem for desired result
-				enter_substate(COMM_CMD_DISPATCH);
+				enter_substate(COMM_REGISTER_INVOKE);
 				result = SYS_OK;
 			}
 
@@ -108,7 +114,7 @@ sys_result  comm_register(void)
 
 	} else if(_state == COMM_REGISTER_QUERYCONTEXT) {
 
-		if(_substate == COMM_CMD_DISPATCH) {
+		if(_substate == COMM_REGISTER_INVOKE) {
 
 			// dispatch the function
 			modem_querycontext();
@@ -116,10 +122,10 @@ sys_result  comm_register(void)
 			//set_timeout(10000);
 
 			// change the _substate so that we can await reply from modem
-			enter_substate(COMM_CMD_WAITREPLY);
+			enter_substate(COMM_REGISTER_WAITREPLY);
 			result = SYS_OK;
 
-		} else if(_substate == COMM_CMD_WAITREPLY) {
+		} else if(_substate == COMM_REGISTER_WAITREPLY) {
 
 			// parse results
 			result = modem_handle_querycontext();
@@ -132,7 +138,7 @@ sys_result  comm_register(void)
 			} else {
 				// toggle between DISPATCH and WAITREPLY
 				// effectively querying the modem for desired result
-				enter_substate(COMM_CMD_DISPATCH);
+				enter_substate(COMM_REGISTER_INVOKE);
 				result = SYS_OK;
 			}
 		}

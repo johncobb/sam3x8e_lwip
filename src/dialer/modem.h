@@ -81,8 +81,11 @@ xSemaphoreHandle config_signal;
 
 sys_result modem_config(uint8_t config_index);
 uint32_t read_modem(void);
-sys_result handle_result(char * token, char ** ptr_out, uint32_t millis);
+sys_result handle_result(char * token, char ** ptr_out);
 uint32_t handle_stream(uint8_t *data, uint32_t len, uint32_t millis);
+
+uint32_t modem_copy_buffer(uint8_t *data);
+
 void SEND_AT(uint8_t *cmd);
 void SEND_RAW(uint8_t *cmd);
 

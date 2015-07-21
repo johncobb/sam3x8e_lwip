@@ -18,12 +18,12 @@ typedef enum
 
 typedef enum
 {
-	COMM_CONFIG_DISPATCH = 0,
+	COMM_CONFIG_INVOKE = 0,
 	COMM_CONFIG_WAITREPLY = 1
 }comm_config_sub_state_t;
 
 static comm_config_state_t _state = COMM_CONFIG_MODEM;
-static comm_config_sub_state_t _substate = COMM_CONFIG_DISPATCH;
+static comm_config_sub_state_t _substate = COMM_CONFIG_INVOKE;
 
 
 at_modem_cmd_t at_cfg_commands[] =
@@ -63,7 +63,7 @@ static bool timeout(void);
 static void enter_state(comm_config_state_t state)
 {
 	_state = state;
-	_substate = COMM_CONFIG_DISPATCH;
+	_substate = COMM_CONFIG_INVOKE;
 	_config_index = 0;
 	_retries = 0;
 }
@@ -72,7 +72,7 @@ static void exit_state(void)
 {
 	exit_substate();
 	_state = COMM_CONFIG_MODEM;
-	_substate = COMM_CONFIG_DISPATCH;
+	_substate = COMM_CONFIG_INVOKE;
 	_config_index = 0;
 	_retries = 0;
 }
@@ -85,7 +85,7 @@ static void enter_substate(comm_config_sub_state_t state)
 
 static void exit_substate()
 {
-	_substate = COMM_CONFIG_DISPATCH;
+	_substate = COMM_CONFIG_INVOKE;
 	_retries = 0;
 }
 
@@ -114,7 +114,7 @@ sys_result comm_config(void)
 
 	if(_state == COMM_CONFIG_MODEM) {
 
-		if(_substate == COMM_CONFIG_DISPATCH) {
+		if(_substate == COMM_CONFIG_INVOKE) {
 			at_cmd = &(at_cfg_commands[_config_index]);
 
 			// check to see if we have reached the end of the array
@@ -145,7 +145,7 @@ sys_result comm_config(void)
 				// all is good so move to next config
 				next();
 				// reset substate back to dispatch
-				enter_substate(COMM_CONFIG_DISPATCH);
+				enter_substate(COMM_CONFIG_INVOKE);
 				return SYS_OK;
 			}
 
@@ -166,7 +166,7 @@ sys_result comm_config(void)
 
 	} else if (_state == COMM_CONFIG_SOCKETS) {
 
-		if(_substate == COMM_CONFIG_DISPATCH) {
+		if(_substate == COMM_CONFIG_INVOKE) {
 
 			socket = &(modem_sockets[_socket_index]);
 			// check to see if we have reached the end of the array
@@ -203,7 +203,7 @@ sys_result comm_config(void)
 				// all is good so move to next config
 				next_socket();
 				// reset substate back to dispatch
-				enter_substate(COMM_CONFIG_DISPATCH);
+				enter_substate(COMM_CONFIG_INVOKE);
 				return SYS_OK;
 			}
 		}

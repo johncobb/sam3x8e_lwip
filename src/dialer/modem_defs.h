@@ -60,13 +60,15 @@ typedef struct
 {
 	modem_socket_type type; // SOCKET_TCP, SOCKET_UDP
 	modem_socket_protocol protocol; // SOCKET_PROT_TCP, SOCKET_PROT_HTTP, SOCKET_PROT_UDP
-	uint8_t port;
+	uint16_t port;
+
 //	uint16_t linger_time; // optional
 //	uint16_t local_port; // optional
 
 }modem_socket_conf_t;
 
-#define SOCKET_BUFFER_LEN	128
+#define SOCKET_BUFFER_LEN		128
+#define SOCKET_ENDPOINT_LEN		256
 // cnx_id, ctx_id, pkt_size, glb_timeout, cnx_timeout (tenths of second), tx_timeout (tenths of second)
 typedef struct
 {
@@ -77,6 +79,7 @@ typedef struct
 	uint16_t cnx_timeout;	// connection timeout
 	uint16_t tx_timeout;	// transmit timeout
 	uint8_t socket_status;
+	uint8_t endpoint[SOCKET_ENDPOINT_LEN+1];
 	modem_socket_conf_t socket_conf;
 	socket_func_t handle_data;
 	uint8_t data_buffer[SOCKET_BUFFER_LEN+1];
@@ -95,7 +98,8 @@ extern modem_socket_t modem_sockets[];
 uint8_t scratch_buffer[SCRATCH_BUFFER_LEN];
 
 
-#define MODEM_DEFAULT_HTTPSERVER	"www.google.com"
+//#define MODEM_DEFAULT_HTTPSERVER	"www.google.com"
+#define MODEM_DEFAULT_HTTPSERVER	"bs.cphandheld.com" // 1888
 #define MODEM_DEFAULT_HTTPREQUEST	"GET / HTTP/1.1\r\nHost: www.google.com\r\nConnection: keep-alive\r\n\r\n"
 #define MODEM_TOKEN_HTTPOK			"HTTP/1.1 200 OK"
 #define MODEM_TOKEN_HTTPFORBIDDEN	"HTTP/1.1 403"

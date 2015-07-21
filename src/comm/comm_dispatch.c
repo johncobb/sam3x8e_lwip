@@ -7,6 +7,7 @@
  */
 #include <string.h>
 #include "modem_defs.h"
+#include "modem.h"
 #include "telit_modem_api.h"
 #include "comm.h"
 #include "comm_dispatch.h"
@@ -26,22 +27,32 @@ typedef enum
 	COMM_SOCKET_LISTEN,
 	COMM_SOCKET_STATUS,
 	COMM_SOCKET_CLOSE
-}comm_dispatch_state;
+}comm_dispatch_state_t;
 
-void comm_settimeout(uint32_t millis);
-bool comm_checkfortimeout(void);
+typedef enum
+{
+	COMM_DISPATCH_INVOKE = 0,
+	COMM_DISPTCH_WAITREPLY = 1
+}comm_dispatch_sub_state_t;
 
-void comm_dispatch_enterstate(comm_dispatch_state state, uint32_t timeout);
-void comm_dispatch_exitstate();
 
-comm_dispatch_state dispatch_state_index = COMM_SOCKET_OPEN;
+static comm_dispatch_state_t _state = COMM_SOCKET_RESUME;
+comm_dispatch_sub_state_t _substate = COMM_DISPATCH_INVOKE;
+
+static void set_timeout(uint32_t millis);
+static bool timeout(void);
+
+static void enter_state(comm_dispatch_state_t state, uint32_t timeout);
+static void exit_state();
+
+
 uint8_t sub_state_index = 0;
 
 
 xTimeOutType time_out_definition;
 portTickType max_wait_millis;
 
-void comm_settimeout(uint32_t millis)
+static void set_timeout(uint32_t millis)
 {
 	max_wait_millis = millis / portTICK_RATE_MS;
 
@@ -50,7 +61,7 @@ void comm_settimeout(uint32_t millis)
 
 }
 
-bool comm_checkfortimeout(void)
+static bool timeout(void)
 {
 	bool timeout = false;
 
@@ -63,112 +74,157 @@ bool comm_checkfortimeout(void)
 	return timeout;
 }
 
-void comm_dispatch_enterstate(comm_dispatch_state state, uint32_t timeout)
+static void enter_state(comm_dispatch_state_t state, uint32_t timeout)
 {
-
-	if(timeout > 0)
-		comm_settimeout(timeout);
-
-	dispatch_state_index = state;
-	sub_state_index = 0;
+	reset_rx_buffer();
+	_state = state;
+	_substate = COMM_DISPATCH_INVOKE;
 }
 
-void comm_dispatch_exitstate(void)
+static void exit_state(void)
 {
-	dispatch_state_index = COMM_SOCKET_RESUME;
-	sub_state_index = 0;
+	reset_rx_buffer();
+	_state = COMM_SOCKET_RESUME;
+	_substate = COMM_DISPATCH_INVOKE;
 }
 
-//sys_result  comm_dispatch(void)
+static void enter_substate(comm_dispatch_sub_state_t state)
+{
+	_substate = state;
+}
+
 sys_result  comm_dispatch(modem_socket_t * socket)
 {
 
-//	modem_socket_t * socket = &(modem_sockets[socket_index]);
+	sys_result result;
 
-//	char *buffer = NULL;
+	// STEP 1 try to resume an existing connection
+	// continue loop
+	if(_state == COMM_SOCKET_RESUME) {
 
-
-	while(true)
-	{
-		// STEP 1 try to resume an existing connection
-		// continue loop
-		if(dispatch_state_index == COMM_SOCKET_RESUME) {
-
+		if(_substate == COMM_DISPATCH_INVOKE) {
 			printf("modem_socketresume...\r\n");
+
 			modem_socketresume(socket);
+			enter_substate(COMM_DISPTCH_WAITREPLY);
+			set_timeout(DEFAULT_COMM_SOCKETRESUME_TIMEOUT);
 
-			sys_result sys_status = modem_handle_socketresume();
+			return SYS_OK;
+		} else if(_substate == COMM_DISPTCH_WAITREPLY) {
 
-			if(sys_status == SYS_AT_OK) {
-				comm_dispatch_enterstate(COMM_SOCKET_WRITE, 0);
-			} else {
-				comm_dispatch_enterstate(COMM_SOCKET_OPEN, 0);
+			if(timeout()) {
+				printf("comm socket resume timeout.\r\n");
+				enter_state(COMM_SOCKET_OPEN, 0);
 			}
-			continue;
+
+			result = modem_handle_socketresume();
+
+			if(result == SYS_AT_OK) {
+				xSemaphoreGive(connect_signal);
+				comm_set_state(COMM_IDLE);
+//				enter_state(COMM_SOCKET_WRITE, 0);
+			}
 		}
 
-		// STEP 2 if resume fails then open a new connection
-		// continue loop
-		if(dispatch_state_index == COMM_SOCKET_OPEN) {
+		return result;
+	}
 
+	// STEP 2 if resume fails then open a new connection
+	// continue loop
+	if(_state == COMM_SOCKET_OPEN) {
+
+		if(_substate == COMM_DISPATCH_INVOKE) {
 			printf("modem_socketopen...\r\n");
+
+//			modem_socketopen(socket, MODEM_DEFAULT_HTTPSERVER);
 			modem_socketopen(socket);
+			enter_substate(COMM_DISPTCH_WAITREPLY);
+			set_timeout(DEFAULT_COMM_SOCKETOPEN_TIMEOUT);
 
+			return SYS_OK;
+		} else if(_substate == COMM_DISPTCH_WAITREPLY) {
 
-			sys_result sys_status = modem_handle_socketopen();
-
-			if(sys_status == SYS_AT_OK) {
-				comm_dispatch_enterstate(COMM_SOCKET_WRITE, 0);
-				//comm_dispatch_enterstate(COMM_SOCKET_SUSPEND);
-				continue;
-			} else {
-				comm_dispatch_enterstate(COMM_SOCKET_SUSPEND, 0);
-				printf("failed: sys_status=%d\r\n", sys_status);
-				// TODO: POSSIBLY IMPLEMENT RETRY
+			if(timeout()) {
+				printf("comm socket open timeout.\r\n");
+				comm_set_state(COMM_IDLE);
 			}
-			continue;
+
+			result = modem_handle_socketopen();
+
+			if(result == SYS_AT_OK) {
+				xSemaphoreGive(connect_signal);
+				comm_set_state(COMM_IDLE);
+//				enter_state(COMM_SOCKET_WRITE, 0);
+			}
 		}
 
-		// STEP 3a write the buffer to the socket and await the response
-		// continue loop
-		if(dispatch_state_index == COMM_SOCKET_WRITE) {
+		return result;
+	}
 
+	// STEP 3a write the buffer to the socket and await the response
+	// continue loop
+	if(_state == COMM_SOCKET_WRITE) {
 
+		if(_substate == COMM_DISPATCH_INVOKE) {
 			printf("modem_socketwrite...\r\n");
+
 			char * data = MODEM_DEFAULT_HTTPREQUEST;
 
 			memset(socket->data_buffer, '\0', SOCKET_BUFFER_LEN+1);
 			socket->bytes_received = 0;
 			modem_socketwrite(socket, data);
-			comm_dispatch_enterstate(COMM_SOCKET_WAITREPLY, 5000);
-			continue;
 
-		}
+			enter_substate(COMM_DISPTCH_WAITREPLY);
+			set_timeout(5000);
 
-		if(dispatch_state_index == COMM_SOCKET_WAITREPLY) {
+			return SYS_OK;
+		} else if(_substate == COMM_DISPTCH_WAITREPLY) {
 
+			// wait up to 5 seconds.
+			if(timeout())
+				enter_state(COMM_SOCKET_SUSPEND, 0);
 
-			if(comm_checkfortimeout())
-				comm_dispatch_enterstate(COMM_SOCKET_SUSPEND, 0);
-//			portTickType max_wait_millis = 20 / portTICK_RATE_MS;
-//			xTimeOutType time_out_definition;
-//			/* Remember the time on entry. */
-//			vTaskSetTimeOutState(&time_out_definition);
-//			if (xTaskCheckForTimeOut(&time_out_definition, &max_wait_millis) == pdTRUE) {
-//
-//			}
-			sys_result sys_status = modem_handle_socketwrite(socket);
-
-			if(socket->bytes_received > 0)
-			{
+			if(bytes_received > 0) {
+				socket->bytes_received = modem_copy_buffer(socket->data_buffer);
 				socket->handle_data(socket->data_buffer, socket->bytes_received);
 			}
-
-			continue;
 		}
 
-		// STEP 3b socket listen
-		// continue loop
+		return result;
+	}
+
+	// STEP 4 suspend the connection and set comm state back to COMM_IDLE
+	// break loop
+	if(_state == COMM_SOCKET_SUSPEND) {
+
+		if(_substate == COMM_DISPATCH_INVOKE) {
+			printf("modem_suspend...\r\n");
+
+			modem_socketsuspend(socket);
+			enter_substate(COMM_DISPTCH_WAITREPLY);
+
+			return SYS_OK;
+		} else if(_substate == COMM_DISPTCH_WAITREPLY) {
+
+			result = modem_handle_socketsuspend();
+
+			if(result == SYS_AT_OK) {
+				exit_state();
+				comm_set_state(COMM_IDLE);
+			} else if (result == SYS_ERR_AT_NOCARRIER) {
+				exit_state();
+				comm_set_state(COMM_IDLE);
+			}else if (result == SYS_ERR_AT_TIMEOUT) {
+				exit_state();
+				comm_set_state(COMM_IDLE);
+			}
+		}
+
+		return result;
+	}
+
+	// STEP 3b socket listen
+	// continue loop
 //		if(dispatch_state_index == COMM_SOCKET_LISTEN) {
 //
 //			// TODO: REWORK
@@ -187,34 +243,8 @@ sys_result  comm_dispatch(modem_socket_t * socket)
 //			}
 //		}
 
-		// STEP 4 suspend the connection and set comm state back to COMM_IDLE
-		// break loop
-		if(dispatch_state_index == COMM_SOCKET_SUSPEND) {
 
-			modem_socketsuspend(socket);
-
-			sys_result sys_status = modem_handle_socketsuspend();
-
-			if(sys_status == SYS_AT_OK) {
-				comm_dispatch_exitstate();
-				comm_set_state(COMM_IDLE);
-				break;
-			} else if (sys_status == SYS_ERR_AT_NOCARRIER) {
-				comm_dispatch_exitstate();
-				comm_set_state(COMM_IDLE);
-				break;
-			}else if (sys_status == SYS_ERR_AT_TIMEOUT) {
-				comm_dispatch_exitstate();
-				comm_set_state(COMM_IDLE);
-				break;
-			}
-		}
-
-		// throttle
-		vTaskDelay(50);
-	}
-
-	return SYS_OK;
+	return result;
 }
 
 

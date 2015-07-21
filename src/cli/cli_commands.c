@@ -62,6 +62,7 @@
 #include "cli.h"
 #include "modem.h"
 #include "dialer.h"
+#include "tcpip.h"
 
 /*
  * Implements the run-time-stats command.
@@ -179,22 +180,21 @@ static const CLI_Command_Definition_t delete_task_command_definition =
 };
 
 
-void dispatch_dialer_command(void);
+void dispatch_tcp_connect(void);
 
 /* Structure that defines the "delete-task" command line command.  This deletes
 the task that was previously created using the "create-command" command. */
 static const CLI_Command_Definition_t dialer_command_definition =
 {
-	(const int8_t *const) "dial",
-	(const int8_t *const) "dial:\r\n tells dialer to invoke the modems diaup command\r\n\r\n",
-	dispatch_dialer_command, /* The function to run. */
+	(const int8_t *const) "connect",
+	(const int8_t *const) "connect:\r\n tells tcpip module to establish connection\r\n\r\n",
+	dispatch_tcp_connect, /* The function to run. */
 	0 /* A single parameter should be entered. */
 };
 
-void dispatch_dialer_command(void)
+void dispatch_tcp_connect(void)
 {
-
-	xSemaphoreGive(dial_signal);
+	cph_tcp_connect(NULL, 0);
 }
 
 

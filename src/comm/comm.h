@@ -25,13 +25,20 @@
 
 xSemaphoreHandle comm_signal;
 
+extern xSemaphoreHandle connect_signal;
 
+#define DEFAULT_COMM_SOCKETOPEN_TIMEOUT			5000
+#define DEFAULT_COMM_SOCKETRESUME_TIMEOUT		1000
 
 #define QUEUE_TICKS		16
 extern QueueHandle_t xCommQueue;
+extern QueueHandle_t xCommQueueRequest;
 
 #define COMM_BUFFER_LEN		256
 extern uint8_t comm_buffer[];
+
+
+extern uint32_t bytes_received;
 
 
 typedef enum
@@ -50,9 +57,11 @@ typedef enum
 
 typedef enum
 {
-	COMM_CMD_DISPATCH = 0,
-	COMM_CMD_WAITREPLY = 1
-}comm_cmd_state_t;
+	COMM_INVOKE = 0,
+	COMM_WAITREPLY = 1
+}comm_sub_state_t;
+
+
 
 typedef enum
 {
@@ -60,6 +69,14 @@ typedef enum
 	FRAME_HTTP,
 	FRAME_UDP
 }comm_frame_type_t;
+
+typedef enum
+{
+	REQUEST_CONNECT = 0,
+	REQUEST_GET,
+	REQUEST_CLOSE,
+	REQUEST_ABORT
+}comm_request_type_t;
 
 
 #define FRAME_BUFFER_LEN	256
@@ -72,6 +89,19 @@ typedef struct
 	uint32_t len;
 
 }comm_frame_t;
+
+
+typedef struct
+{
+	comm_request_type_t type;
+	uint8_t socket_address;
+	uint32_t timeout;
+	uint8_t endpoint[SOCKET_ENDPOINT_LEN+1];
+	uint32_t len;
+
+}comm_request_t;
+
+
 
 
 extern comm_state_t comm_state;

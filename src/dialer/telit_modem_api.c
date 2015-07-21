@@ -105,11 +105,22 @@ void modem_mobileequiperr(void)
 }
 
 // modem socket functions: open, suspend, resume, close
+//void modem_socketopen(modem_socket_t *socket)
+//{
+//	memset(scratch_buffer, '\0', SCRATCH_BUFFER_LEN);
+//	// "AT#SD=1,0,80,\"www.google.com\"\r"
+//	sprintf(scratch_buffer, MODEM_CMD_SOCKETOPEN, socket->cnx_id, socket->socket_conf.type, socket->socket_conf.port, MODEM_DEFAULT_HTTPSERVER);
+//	SEND_AT(scratch_buffer);
+//	printf(scratch_buffer);
+//	printf("\r\n");
+//}
+
+
 void modem_socketopen(modem_socket_t *socket)
 {
 	memset(scratch_buffer, '\0', SCRATCH_BUFFER_LEN);
 	// "AT#SD=1,0,80,\"www.google.com\"\r"
-	sprintf(scratch_buffer, MODEM_CMD_SOCKETOPEN, socket->cnx_id, socket->socket_conf.type, socket->socket_conf.port, MODEM_DEFAULT_HTTPSERVER);
+	sprintf(scratch_buffer, MODEM_CMD_SOCKETOPEN, socket->cnx_id, socket->socket_conf.type, socket->socket_conf.port, socket->endpoint);
 	SEND_AT(scratch_buffer);
 	printf(scratch_buffer);
 	printf("\r\n");
@@ -225,7 +236,7 @@ sys_result modem_handle_activatecontext(void)
 	char * ptr = NULL;
 	sys_result sys_status;
 
-	sys_status = handle_result(MODEM_TOKEN_SGACT, &ptr, 5000);
+	sys_status = handle_result(MODEM_TOKEN_SGACT, &ptr);
 
 	printf("buffer:%s\r\n", ptr);
 
@@ -247,7 +258,7 @@ sys_result modem_handle_querycontext(void)
 	char * ptr = NULL;
 	sys_result sys_status;
 
-	sys_status = handle_result(MODEM_TOKEN_SGACT, &ptr, 1000);
+	sys_status = handle_result(MODEM_TOKEN_SGACT, &ptr);
 
 	// example result: #SGACT: 1,0
 	if(sys_status == SYS_AT_OK) {
@@ -270,7 +281,7 @@ sys_result modem_handle_querynetwork(void)
 	char * ptr = NULL;
 	sys_result sys_status;
 
-	sys_status = handle_result(MODEM_TOKEN_CREG, &ptr, 1000);
+	sys_status = handle_result(MODEM_TOKEN_CREG, &ptr);
 
 	//			// Example Response "+CREG: 0,0" // Module not registered not searching
 	//			// Example Response "+CREG: 0,1" // Module registered on network
@@ -298,7 +309,7 @@ sys_result modem_handle_querysignal(void)
 	char * ptr = NULL;
 	sys_result sys_status;
 
-	sys_status = handle_result(MODEM_TOKEN_CSQ, &ptr, 1000);
+	sys_status = handle_result(MODEM_TOKEN_CSQ, &ptr);
 
 	printf("buffer:%s\r\n", ptr);
 
@@ -336,7 +347,7 @@ sys_result modem_handle_socketopen(void)
 	char * ptr = NULL;
 	sys_result sys_status;
 
-	sys_status = handle_result(MODEM_TOKEN_CONNECT, &ptr, MODEM_DEFAULT_SOCKETOPEN_TIMEOUT);
+	sys_status = handle_result(MODEM_TOKEN_CONNECT, &ptr);
 
 	printf("buffer:%s\r\n", ptr);
 
@@ -353,7 +364,7 @@ sys_result modem_handle_socketclose(void)
 	char * ptr = NULL;
 	sys_result sys_status;
 
-	sys_status = handle_result(MODEM_TOKEN_OK, &ptr, 2500);
+	sys_status = handle_result(MODEM_TOKEN_OK, &ptr);
 
 	if(sys_status == SYS_AT_OK) {
 		modem_status.connection = CNX_CLOSED;
@@ -369,7 +380,7 @@ sys_result modem_handle_socketresume(void)
 	char * ptr = NULL;
 	sys_result sys_status;
 
-	sys_status = handle_result(MODEM_TOKEN_CONNECT, &ptr, 5000);
+	sys_status = handle_result(MODEM_TOKEN_CONNECT, &ptr);
 
 	if(sys_status == SYS_AT_OK) {
 		modem_status.connection = CNX_OPENED;
@@ -385,7 +396,7 @@ sys_result modem_handle_socketsuspend(void)
 	char * ptr = NULL;
 	sys_result sys_status;
 
-	sys_status = handle_result(MODEM_TOKEN_OK, &ptr, MODEM_DEFAULT_SOCKETSUSPEND_TIMEOUT);
+	sys_status = handle_result(MODEM_TOKEN_OK, &ptr);
 
 	if(sys_status == SYS_AT_OK) {
 		modem_status.connection = CNX_SUSPENDED;
@@ -415,6 +426,8 @@ sys_result modem_handle_socketsuspend(void)
 
 sys_result modem_handle_socketwrite(modem_socket_t *socket)
 {
+
+
 	socket->bytes_received = handle_stream(socket->data_buffer, SOCKET_BUFFER_LEN, MODEM_DEFAULT_SOCKETWRITE_TIMEOUT);
 
 	//printf("socket->bytes_received=%lu\r\n", socket->bytes_received);
@@ -426,7 +439,7 @@ uint8_t modem_handle_socketstatus(modem_socket_t *socket)
 	char * ptr = NULL;
 	sys_result sys_status;
 
-	sys_status = handle_result(MODEM_TOKEN_OK, &ptr, 1000);
+	sys_status = handle_result(MODEM_TOKEN_OK, &ptr);
 
 	printf("buffer:%s\r\n", ptr);
 
@@ -460,7 +473,7 @@ sys_result modem_handle_udpsocketopen(void)
 	char * ptr = NULL;
 	sys_result sys_status;
 
-	sys_status = handle_result(MODEM_TOKEN_CONNECT, &ptr, 5000);
+	sys_status = handle_result(MODEM_TOKEN_CONNECT, &ptr);
 
 	printf("buffer:%s\r\n", ptr);
 
@@ -477,7 +490,7 @@ sys_result modem_handle_udpsocketclose(void)
 	char * ptr = NULL;
 	sys_result sys_status;
 
-	sys_status = handle_result(MODEM_TOKEN_OK, &ptr, 2500);
+	sys_status = handle_result(MODEM_TOKEN_OK, &ptr);
 
 	if(sys_status == SYS_AT_OK) {
 		modem_status.connection = CNX_CLOSED;
@@ -493,7 +506,7 @@ sys_result modem_handle_udpsocketresume(void)
 	char * ptr = NULL;
 	sys_result sys_status;
 
-	sys_status = handle_result(MODEM_TOKEN_CONNECT, &ptr, 5000);
+	sys_status = handle_result(MODEM_TOKEN_CONNECT, &ptr);
 
 	if(sys_status == SYS_AT_OK) {
 		modem_status.connection = CNX_OPENED;
@@ -509,7 +522,7 @@ sys_result modem_handle_udpsocketsuspend(void)
 	char * ptr = NULL;
 	sys_result sys_status;
 
-	sys_status = handle_result(MODEM_TOKEN_OK, &ptr, 2500);
+	sys_status = handle_result(MODEM_TOKEN_OK, &ptr);
 
 	if(sys_status == SYS_AT_OK) {
 		modem_status.connection = CNX_SUSPENDED;
@@ -526,7 +539,7 @@ sys_result modem_handle_httpsocketopen(void)
 	char * ptr = NULL;
 	sys_result sys_status;
 
-	sys_status = handle_result(MODEM_TOKEN_CONNECT, &ptr, 5000);
+	sys_status = handle_result(MODEM_TOKEN_CONNECT, &ptr);
 
 	printf("buffer:%s\r\n", ptr);
 
@@ -543,7 +556,7 @@ sys_result modem_handle_httpsocketclose(void)
 	char * ptr = NULL;
 	sys_result sys_status;
 
-	sys_status = handle_result(MODEM_TOKEN_OK, &ptr, 2500);
+	sys_status = handle_result(MODEM_TOKEN_OK, &ptr);
 
 	if(sys_status == SYS_AT_OK) {
 		modem_status.connection = CNX_CLOSED;
@@ -559,7 +572,7 @@ sys_result modem_handle_httpsocketresume(void)
 	char * ptr = NULL;
 	sys_result sys_status;
 
-	sys_status = handle_result(MODEM_TOKEN_CONNECT, &ptr, 5000);
+	sys_status = handle_result(MODEM_TOKEN_CONNECT, &ptr);
 
 	if(sys_status == SYS_AT_OK) {
 		modem_status.connection = CNX_OPENED;
@@ -575,7 +588,7 @@ sys_result modem_handle_httpsocketsuspend(void)
 	char * ptr = NULL;
 	sys_result sys_status;
 
-	sys_status = handle_result(MODEM_TOKEN_OK, &ptr, 2500);
+	sys_status = handle_result(MODEM_TOKEN_OK, &ptr);
 
 	if(sys_status == SYS_AT_OK) {
 		modem_status.connection = CNX_SUSPENDED;
@@ -591,7 +604,7 @@ sys_result modem_handle_httpsocketget(void)
 	char * ptr = NULL;
 	sys_result sys_status;
 
-	sys_status = handle_result(MODEM_TOKEN_HTTPOK, &ptr, 5000);
+	sys_status = handle_result(MODEM_TOKEN_HTTPOK, &ptr);
 
 	printf("buffer:%s\r\n", ptr);
 

@@ -25,17 +25,25 @@ sys_result http_handle_data(uint8_t *data, uint32_t len)
 {
 	//memcpy(http_buffer, data, len);
 
+//	printf("http_handle_data (%lu): %s\r\n", len, data);
 	comm_frame_t frame;
+
+	memset(frame.buffer, '\0', FRAME_BUFFER_LEN+1);
 
 	frame.type = FRAME_HTTP;
 	frame.len = len;
+
 	memcpy(frame.buffer, data, len);
+
+
+
+	//printf("frame: %s\r\n", frame.buffer);
 
 
 	result = xQueueSendToBack( xCommQueue, &frame, (TickType_t)0);
 
 	if(result == pdTRUE) {
-		printf("message queued.\r\n");
+		//printf("message queued.\r\n");
 	} else {
 		printf("failed to enqueue message\r\n");
 	}

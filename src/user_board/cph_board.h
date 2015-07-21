@@ -8,6 +8,9 @@
 #include "pio.h"
 #include "pmc.h"
 
+
+#define UNIT_TEST_YIELD		vTaskDelay(10); continue;
+
 // special function to initialize usart after configuring pins
 void board_init_modem_usart(void);
 

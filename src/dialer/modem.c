@@ -39,11 +39,12 @@ void pause(void);
 modem_socket_t modem_sockets[] =
 {
 		// cnx_id, ctx_id, pkt_size, glb_timeout, cnx_timeout (tenths of second), tx_timeout (tenths of second)
-		// socket_status
+		// socket_status, endpoint
 		// protocol, address, port
 		// function_handler, data_buffer, bytes_received
-		{1, 1, 512, 90, 600, 2, 0, {SOCKET_TCP, SOCKET_PROT_HTTP, 80}, http_handle_data, {0}, 0},
-		{2, 1, 512, 90, 600, 2, 0, {SOCKET_TCP, SOCKET_PROT_TCP, 80}, NULL, {0}, 0},
+		//{1, 1, 512, 90, 600, 2, 0, {SOCKET_TCP, SOCKET_PROT_HTTP, 80}, http_handle_data, {0}, 0},
+		{1, 1, 512, 90, 600, 2, 0, {0}, {SOCKET_TCP, SOCKET_PROT_HTTP, 1888}, http_handle_data, {0}, 0},
+		{2, 1, 512, 90, 600, 2, 0, {0}, {SOCKET_TCP, SOCKET_PROT_TCP, 80}, NULL, {0}, 0},
 //		{3, 1, 512, 90, 600, 2},
 //		{4, 1, 512, 90, 600, 2},
 //		{5, 1, 512, 90, 600, 2},
@@ -53,9 +54,20 @@ modem_socket_t modem_sockets[] =
 };
 
 
+uint32_t timeout = 0;
+//char received_char;
+//int8_t input_index = 0;
+//static char input_string[MAX_INPUT_SIZE];
+char * ptr = NULL;
+
+uint32_t bytes_received;
+uint8_t rx_buffer[RX_BUFFER_LEN+1];
+
+
 
 void reset_rx_buffer(void)
 {
+	bytes_received = 0;
 	memset(modem_rx_buffer, '\0', sizeof(modem_rx_buffer));
 }
 
@@ -222,7 +234,7 @@ sys_result modem_config_handler(void)
 
 	sys_result sys_status;
 
-	sys_status = handle_result(MODEM_TOKEN_OK, &ptr,  10);
+	sys_status = handle_result(MODEM_TOKEN_OK, &ptr);
 
 	if(sys_status == SYS_AT_OK) {
 		//at_cmd++;
@@ -256,7 +268,7 @@ sys_result configure_sockets(void)
 		// cnx_id, ctx_id, pkt_size, glb_timeout, cnx_timeout (tenths of second), tx_timeout (tenths of second)
 		modem_socketconfigex(socket);
 
-		sys_status = handle_result(MODEM_TOKEN_OK, &ptr,  1000);
+		sys_status = handle_result(MODEM_TOKEN_OK, &ptr);
 
 		socket++;
 
@@ -347,14 +359,7 @@ void SEND_RAW(uint8_t *cmd)
 								max_block_time_ticks);
 }
 
-uint32_t timeout = 0;
-//char received_char;
-//int8_t input_index = 0;
-//static char input_string[MAX_INPUT_SIZE];
-char * ptr = NULL;
 
-uint32_t bytes_received;
-uint8_t rx_buffer[RX_BUFFER_LEN+1];
 
 uint32_t modem_handler_async(uint32_t millis)
 {
@@ -366,46 +371,43 @@ uint32_t modem_handler_async(uint32_t millis)
 	return len;
 }
 
-sys_result handle_result(char * token, char ** ptr_out, uint32_t millis)
+sys_result handle_result(char * token, char ** ptr_out)
 {
 
-//	if (bytes_received > 0) {
 
-		// SPECIAL CASE FOR HANDLING ASYNCHRONOUS DATA
-		if(token == NULL) {
-			*ptr_out = modem_rx_buffer;
-			return SYS_OK;
-		}
-
-		//if((ptr = strstr(input_string, token))) {
-		if((ptr = strstr(modem_rx_buffer, token))) {
-			if(ptr_out != NULL) {
-				*ptr_out = ptr;
-			}
-			//printf("SYS_AT_OK\r\n");
-			return SYS_AT_OK;
-		} else if ((ptr = strstr(modem_rx_buffer, MODEM_TOKEN_ERROR))) {
-			if(ptr_out != NULL) {
-				*ptr_out = ptr;
-			}
-			printf("SYS_ERR_AT_FAIL\r\n");
-			return SYS_ERR_AT_FAIL;
-		} else if((ptr = strstr(modem_rx_buffer, MODEM_TOKEN_NOCARRIER))) {
-			if(ptr_out != NULL) {
-				*ptr_out = ptr;
-			}
-			printf("SYS_ERR_AT_NOCARRIER\r\n");
-			return SYS_ERR_AT_NOCARRIER;
-		}
+	// SPECIAL CASE FOR HANDLING ASYNCHRONOUS DATA
+//	if(token == NULL) {
+//		*ptr_out = modem_rx_buffer;
+//		return SYS_OK;
 //	}
+
+	//if((ptr = strstr(input_string, token))) {
+	if((ptr = strstr(modem_rx_buffer, token))) {
+		if(ptr_out != NULL) {
+			*ptr_out = ptr;
+		}
+		//printf("SYS_AT_OK\r\n");
+		return SYS_AT_OK;
+	} else if ((ptr = strstr(modem_rx_buffer, MODEM_TOKEN_ERROR))) {
+		if(ptr_out != NULL) {
+			*ptr_out = ptr;
+		}
+		printf("SYS_ERR_AT_FAIL\r\n");
+		return SYS_ERR_AT_FAIL;
+	} else if((ptr = strstr(modem_rx_buffer, MODEM_TOKEN_NOCARRIER))) {
+		if(ptr_out != NULL) {
+			*ptr_out = ptr;
+		}
+		printf("SYS_ERR_AT_NOCARRIER\r\n");
+		return SYS_ERR_AT_NOCARRIER;
+	}
+
 
 	// set ptr_out to the rx_buffer for troubleshooting
 	if(ptr_out != NULL) {
 		*ptr_out = modem_rx_buffer;
 	}
 
-//	printf("SYS_ERR_AT_TIMEOUT\r\n");
-//	return SYS_ERR_AT_TIMEOUT;
 }
 
 sys_result handle_result2(char * token, char ** ptr_out, uint32_t millis)
@@ -472,6 +474,12 @@ uint32_t read_modem(void)
 
 	memset(rx_buffer, '\0', RX_BUFFER_LEN+1);
 	return freertos_usart_serial_read_packet(modem_usart, rx_buffer, RX_BUFFER_LEN, max_wait_millis);
+}
+
+uint32_t modem_copy_buffer(uint8_t *data)
+{
+	memcpy(data, modem_rx_buffer, bytes_received);
+	return bytes_received;
 }
 
 
