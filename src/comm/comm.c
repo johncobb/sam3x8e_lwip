@@ -164,9 +164,8 @@ static void comm_handler_task(void *pvParameters)
 		}
 
 
-
-
 		response_queue();
+
 
 		UNIT_TEST_YIELD;
 

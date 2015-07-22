@@ -44,7 +44,8 @@ modem_socket_t modem_sockets[] =
 		// function_handler, data_buffer, bytes_received
 		//{1, 1, 512, 90, 600, 2, 0, {SOCKET_TCP, SOCKET_PROT_HTTP, 80}, http_handle_data, {0}, 0},
 		{1, 1, 512, 90, 600, 2, 0, {0}, {SOCKET_TCP, SOCKET_PROT_HTTP, 1888}, http_handle_data, {0}, 0},
-		{2, 1, 512, 90, 600, 2, 0, {0}, {SOCKET_TCP, SOCKET_PROT_TCP, 80}, NULL, {0}, 0},
+		{2, 1, 512, 90, 600, 2, 0, {0}, {SOCKET_TCP, SOCKET_PROT_HTTP, 1888}, http_handle_data, {0}, 0},
+//		{2, 1, 512, 90, 600, 2, 0, {0}, {SOCKET_TCP, SOCKET_PROT_TCP, 80}, NULL, {0}, 0},
 //		{3, 1, 512, 90, 600, 2},
 //		{4, 1, 512, 90, 600, 2},
 //		{5, 1, 512, 90, 600, 2},
