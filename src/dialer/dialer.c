@@ -145,7 +145,7 @@ static void ppp_dialer_task(void *pvParameters)
 	printf("comm_connect\r\n");
 
 
-	comm_connect();
+	//comm_connect();
 
 	comm_http();
 

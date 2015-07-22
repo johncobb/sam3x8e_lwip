@@ -24,8 +24,8 @@ tcp_result tcp_init(tcp_func_t handle_data);
 tcp_result tcp_input(void);
 tcp_result tcp_output(void);
 
-tcp_result cph_tcp_connect(uint8_t *endpoint, uint32_t len);
-tcp_result cph_tcp_send(uint8_t packet);
+tcp_result cph_tcp_connect(uint8_t *endpoint);
+tcp_result cph_tcp_send(uint8_t *packet);
 tcp_result cph_tcp_listen(uint8_t *endpoint, uint32_t len);
 
 

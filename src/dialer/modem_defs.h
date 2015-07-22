@@ -69,6 +69,17 @@ typedef struct
 
 #define SOCKET_BUFFER_LEN		128
 #define SOCKET_ENDPOINT_LEN		256
+
+typedef enum
+{
+	SOCKET_CLOSED = 0,
+	SOCKET_ACTIVE_DATATRANSFER,
+	SOCKET_SUSPENDED,
+	SOCKET_SUSPENDED_PENDINGDATA,
+	SOCKET_LISTENING,
+	SOCKET_INCOMINGCONNECTION
+}socket_state_t;
+
 // cnx_id, ctx_id, pkt_size, glb_timeout, cnx_timeout (tenths of second), tx_timeout (tenths of second)
 typedef struct
 {
@@ -78,7 +89,7 @@ typedef struct
 	uint16_t glb_timeout;	// global timeout
 	uint16_t cnx_timeout;	// connection timeout
 	uint16_t tx_timeout;	// transmit timeout
-	uint8_t socket_status;
+	socket_state_t socket_status;
 	uint8_t endpoint[SOCKET_ENDPOINT_LEN+1];
 	modem_socket_conf_t socket_conf;
 	socket_func_t handle_data;
@@ -133,6 +144,7 @@ uint8_t scratch_buffer[SCRATCH_BUFFER_LEN];
 #define MODEM_TOKEN_CMGL			"+CMGL:"
 #define MODEM_TOKEN_CMGR			"+CMGR:"
 #define MODEM_TOKEN_SOCKETSTATUS	"#SS:"
+#define MODEM_TOKEN_SOCKETSTATUS_ID	"#SS: %d"
 #define MODEM_TOKEN_REMOTECMD		"$"
 
 

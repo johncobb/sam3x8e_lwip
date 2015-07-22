@@ -143,13 +143,34 @@ static void comm_handler_task(void *pvParameters)
 		// continue loop from here.
 		//UNIT_TEST_YIELD;
 
-		if(comm_state == COMM_DISPATCH) {
-			comm_dispatch(socket);
+//		if(comm_state == COMM_DISPATCH) {
+//			comm_dispatch(socket);
+//		}
+
+		if(comm_state == COMM_CONNECT) {
+			//testing a connection
+			memset(socket->endpoint, '\0', SOCKET_ENDPOINT_LEN+1);
+			memcpy(socket->endpoint, MODEM_DEFAULT_HTTPSERVER, SOCKET_ENDPOINT_LEN);
+
+			comm_connect(socket);
+		}
+
+		if(comm_state == COMM_SEND) {
+			comm_send(socket);
+		}
+
+		if(comm_state == COMM_SUSPEND) {
+			comm_suspend(socket);
 		}
 
 
-		request_queue();
+
+
 		response_queue();
+
+		UNIT_TEST_YIELD;
+
+		request_queue();
 
 
 //		if(comm_dispatch_sig > 0) {
@@ -174,24 +195,16 @@ static void request_queue(void)
 
 	if(result == pdTRUE) {
 
-		if(request.type == REQUEST_CONNECT)
-		{
-			printf("endpoint received:%s\r\n", request.endpoint);
-
-
-			//memset(socket->endpoint, '\0', SOCKET_ENDPOINT_LEN+1);
-
-			//printf("request endpoint: %s\r\n", request.endpoint);
+		if(request.type == REQUEST_CONNECT) {
+			//printf("endpoint received:%s\r\n", request.endpoint);
 
 			memcpy(socket->endpoint, request.endpoint, SOCKET_ENDPOINT_LEN);
-//			if (request.endpoint != NULL) {
-//				memcpy(socket->socket_conf.endpoint, request.endpoint, FRAME_BUFFER_LEN);
-////				socket->socket_conf.endpoint = request.endpoint;
-//			}
-
 			comm_set_state(COMM_DISPATCH);
-			//comm_set_state(COMM_CONNECT);
-			// TODO: Enqueue to TCP thread
+
+		}
+
+		if(request.type == REQUEST_SEND) {
+
 		}
 
 

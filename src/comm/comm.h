@@ -18,17 +18,27 @@
 #include "comm_idle.h"
 #include "comm_dispatch.h"
 #include "comm_connect.h"
+#include "comm_send.h"
+#include "comm_suspend.h"
 #include "comm_udp.h"
 #include "comm_http.h"
 
 //#define COMM_USE_MEMCPY	1
 
+extern void comm_socket_connect(void);
+extern void comm_socket_suspend(void);
+extern void comm_socket_close();
+
+
 xSemaphoreHandle comm_signal;
 
 extern xSemaphoreHandle connect_signal;
 
-#define DEFAULT_COMM_SOCKETOPEN_TIMEOUT			5000
-#define DEFAULT_COMM_SOCKETRESUME_TIMEOUT		1000
+#define DEFAULT_COMM_SOCKETOPEN_TIMEOUT			10000
+#define DEFAULT_COMM_SOCKETRESUME_TIMEOUT		5000
+#define DEFAULT_COMM_SOCKETSTATUS_TIMEOUT		500
+#define DEFAULT_COMM_SOCKETSEND_TIMEOUT			1000
+#define DEFAULT_COMM_SOCKETSUSPEND_TIMEOUT		5000
 
 #define QUEUE_TICKS		16
 extern QueueHandle_t xCommQueue;
@@ -39,7 +49,6 @@ extern uint8_t comm_buffer[];
 
 
 extern uint32_t bytes_received;
-
 
 typedef enum
 {
@@ -62,7 +71,6 @@ typedef enum
 }comm_sub_state_t;
 
 
-
 typedef enum
 {
 	FRAME_TCP = 0,
@@ -73,6 +81,7 @@ typedef enum
 typedef enum
 {
 	REQUEST_CONNECT = 0,
+	REQUEST_SEND,
 	REQUEST_GET,
 	REQUEST_CLOSE,
 	REQUEST_ABORT

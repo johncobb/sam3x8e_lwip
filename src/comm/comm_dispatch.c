@@ -46,11 +46,9 @@ static void enter_state(comm_dispatch_state_t state, uint32_t timeout);
 static void exit_state();
 
 
-uint8_t sub_state_index = 0;
 
-
-xTimeOutType time_out_definition;
-portTickType max_wait_millis;
+static xTimeOutType time_out_definition;
+static portTickType max_wait_millis;
 
 static void set_timeout(uint32_t millis)
 {

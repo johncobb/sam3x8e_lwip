@@ -194,7 +194,7 @@ static const CLI_Command_Definition_t dialer_command_definition =
 
 void dispatch_tcp_connect(void)
 {
-	cph_tcp_connect(NULL, 0);
+	cph_tcp_connect(NULL);
 }
 
 

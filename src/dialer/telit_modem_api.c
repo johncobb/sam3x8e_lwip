@@ -436,12 +436,17 @@ sys_result modem_handle_socketwrite(modem_socket_t *socket)
 
 uint8_t modem_handle_socketstatus(modem_socket_t *socket)
 {
+
+	// build the token we're looking for #SS:1 or #SS:2
+	memset(scratch_buffer, '\0', SCRATCH_BUFFER_LEN);
+	sprintf(scratch_buffer, MODEM_TOKEN_SOCKETSTATUS_ID, socket->cnx_id);
+
 	char * ptr = NULL;
 	sys_result sys_status;
 
-	sys_status = handle_result(MODEM_TOKEN_OK, &ptr);
+	//sys_status = handle_result(MODEM_TOKEN_SOCKETSTATUS, &ptr);
 
-	printf("buffer:%s\r\n", ptr);
+	sys_status = handle_result(scratch_buffer, &ptr);
 
 	/*
 	 * example result:

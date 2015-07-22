@@ -42,41 +42,7 @@ void new_connection(comm_request_t *request, uint8_t *endpoint)
 
 }
 
-
-//tcp_result cph_tcp_connect(char *endpoint, uint32_t len)
-//{
-//
-//	// TODO: SEMAPHORE TAKE GIVE TASK NOTIFY
-//	BaseType_t result;
-//
-//	comm_request_t request;
-//
-//	memset(request.endpoint, '\0', FRAME_BUFFER_LEN+1);
-//	request.socket_address = 0;
-//	request.type = REQUEST_CONNECT;
-//	request.timeout = DEFAULT_TCIP_CONNECTTIMEOUT;
-//
-//	// copy in the destination address
-//	//memcpy(request.endpoint, MODEM_DEFAULT_HTTPSERVER, SOCKET_ENDPOINT_LEN);
-//	memcpy(request.endpoint, MODEM_DEFAULT_HTTPSERVER, SOCKET_ENDPOINT_LEN);
-//
-//	//printf("enqueueing endpoint: %s\r\n", request.endpoint);
-//
-//	result = xQueueSendToBack( xCommQueueRequest, &request, (TickType_t)0);
-//
-//	if(result == pdTRUE) {
-//		printf("request enqueued.\r\n");
-//	}
-//
-//	if(xSemaphoreTake(connect_signal, portMAX_DELAY)) {
-//		printf("tcp_connect: connected.\r\n");
-//	}
-//
-//
-//	return SYS_TCP_OK;
-//}
-
-tcp_result cph_tcp_connect(uint8_t *endpoint, uint32_t len)
+tcp_result cph_tcp_connect(uint8_t *endpoint)
 {
 
 	// TODO: SEMAPHORE TAKE GIVE TASK NOTIFY
@@ -98,6 +64,19 @@ tcp_result cph_tcp_connect(uint8_t *endpoint, uint32_t len)
 
 
 	return SYS_TCP_OK;
+}
+
+tcp_result cph_tcp_send(uint8_t *packet)
+{
+	// TODO: SEMAPHORE TAKE GIVE TASK NOTIFY
+	BaseType_t result;
+
+	comm_request_t request;
+
+	request.type = REQUEST_SEND;
+
+	return SYS_TCP_OK;
+
 }
 
 

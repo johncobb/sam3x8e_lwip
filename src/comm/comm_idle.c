@@ -28,6 +28,8 @@ static portTickType max_wait_millis;
 static void set_timeout(uint32_t millis);
 static bool timeout(void);
 
+static uint8_t app_state_index = 0;
+
 sys_result comm_idle(void)
 {
 
@@ -40,16 +42,18 @@ sys_result comm_idle(void)
 	} else if(COMM_IDLE_WAITTIMEOUT) {
 
 		if(timeout()) {
-			_state = COMM_IDLE_SETTIMEOUT;
-			//comm_set_state(COMM_DISPATCH);
+
+			if(app_state_index == 0) {
+				_state = COMM_IDLE_SETTIMEOUT;
+				comm_set_state(COMM_CONNECT);
+				app_state_index++;
+			} else if(app_state_index == 1) {
+				comm_set_state(COMM_SEND);
+				app_state_index = 0;
+			}
+
 		}
 	}
-//	printf("comm_idle\r\n");
-//
-//	printf("wait 1 sec.\r\n");
-//	vTaskDelay(1000);
-
-	//comm_set_state(COMM_DISPATCH);
 
 	return SYS_OK;
 

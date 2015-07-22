@@ -9,6 +9,6 @@
 #define COMM_CONNECT_H_
 #include "modem.h"
 
-sys_result  comm_connect(void);
+sys_result  comm_connect(modem_socket_t * socket);
 
 #endif /* COMM_CONNECT_H_ */
