@@ -48,6 +48,8 @@ extern QueueHandle_t xCommQueueRequest;
 extern uint8_t comm_buffer[];
 
 
+#define	MAX_SOCKET_LEN		6
+
 extern uint32_t bytes_received;
 
 typedef enum
@@ -69,6 +71,13 @@ typedef enum
 	COMM_INVOKE = 0,
 	COMM_WAITREPLY = 1
 }comm_sub_state_t;
+
+typedef struct
+{
+	comm_state_t comm_state[MAX_SOCKET_LEN];
+
+
+}comm_state_handler_t;
 
 
 typedef enum
