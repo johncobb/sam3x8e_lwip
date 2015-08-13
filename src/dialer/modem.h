@@ -50,7 +50,8 @@ typedef enum
 	SYS_ERR_AT_FAIL,
 	SYS_ERR_FAIL_OTHERS,
 	SYS_ERR_FAIL,
-	SYS_CONFIG_OK
+	SYS_CONFIG_OK,
+	SYS_NOTFOUND
 }sys_result;
 
 typedef enum
@@ -82,6 +83,7 @@ xSemaphoreHandle config_signal;
 sys_result modem_config(uint8_t config_index);
 uint32_t read_modem(void);
 sys_result handle_result(char * token, char ** ptr_out);
+sys_result handle_result_ex(uint8_t * rx_buffer, char * token, char ** ptr_out);
 uint32_t handle_stream(uint8_t *data, uint32_t len, uint32_t millis);
 
 uint32_t modem_copy_buffer(uint8_t *data);

@@ -8,7 +8,7 @@
 #ifndef COMM_REGISTER_H_
 #define COMM_REGISTER_H_
 
-#include "modem.h"
+#include "socket.h"
 
 sys_result  comm_register(void);
 

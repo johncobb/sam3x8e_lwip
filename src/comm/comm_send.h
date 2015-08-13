@@ -8,8 +8,7 @@
 #ifndef COMM_SEND_H_
 #define COMM_SEND_H_
 
-
-#include "modem.h"
+#include "socket.h"
 
 sys_result  comm_send(modem_socket_t * socket);
 

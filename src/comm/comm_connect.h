@@ -7,7 +7,8 @@
 
 #ifndef COMM_CONNECT_H_
 #define COMM_CONNECT_H_
-#include "modem.h"
+
+#include "socket.h"
 
 sys_result  comm_connect(modem_socket_t * socket);
 

@@ -8,7 +8,7 @@
 #ifndef COMM_SUSPEND_H_
 #define COMM_SUSPEND_H_
 
-#include "modem.h"
+#include "socket.h"
 
 sys_result  comm_suspend(modem_socket_t * socket);
 

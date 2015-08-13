@@ -63,7 +63,7 @@ delete-task:
 #define mainAPPTASK_TASK_PRIORITY				(tskIDLE_PRIORITY + 1)
 
 /* The stack sizes allocated to the various tasks. */
-#define mainUART_CLI_TASK_STACK_SIZE    		(configMINIMAL_STACK_SIZE * 2)
+#define mainUART_CLI_TASK_STACK_SIZE    		(1024)
 #define mainLED_TASK_STACK_SIZE					(configMINIMAL_STACK_SIZE * 2)
 #define mainDIALER_TASK_STACK_SIZE				(1024)
 #define mainCOMM_TASK_STACK_SIZE				(2048)
@@ -171,8 +171,8 @@ int main(void) {
 	printf("create_comm_task\r\n");
 	create_comm_task(mainCOMM_TASK_STACK_SIZE, mainCOMM_TASK_PRIORITY);
 
-//	printf("create_apptask_task\r\n");
-//	create_comm_task(mainAPPTASK_TASK_STACK_SIZE, mainAPPTASK_TASK_PRIORITY);
+	printf("create_apptask_task\r\n");
+	create_app_task(mainAPPTASK_TASK_STACK_SIZE, mainAPPTASK_TASK_PRIORITY);
 
 	printf("create_led_task\r\n");
 	create_led_task();

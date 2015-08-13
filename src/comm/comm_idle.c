@@ -9,6 +9,7 @@
 #include "modem_defs.h"
 #include "modem.h"
 #include "comm.h"
+#include "socket.h"
 #include "comm_idle.h"
 
 typedef enum
@@ -17,66 +18,28 @@ typedef enum
 	COMM_IDLE_WAITTIMEOUT = 1
 }comm_idle_state_t;
 
-comm_idle_state_t _state = COMM_IDLE_SETTIMEOUT;
 
-
-
-static xTimeOutType time_out_definition;
-static portTickType max_wait_millis;
-
-// prototypes
-static void set_timeout(uint32_t millis);
-static bool timeout(void);
-
-static uint8_t app_state_index = 0;
-
-sys_result comm_idle(void)
+sys_result  comm_idle(modem_socket_t * socket)
 {
+	sys_result result;
 
-	if(_state == COMM_IDLE_SETTIMEOUT) {
+	if(socket->state_handle.state == COMM_IDLE_SETTIMEOUT) {
 
 		printf("comm_idle\r\n");
 		printf("wait %d sec.\r\n", DEFAULT_COMM_IDLE_TIMEOUT/1000);
-		_state = COMM_IDLE_WAITTIMEOUT;
-		set_timeout(DEFAULT_COMM_IDLE_TIMEOUT);
-	} else if(COMM_IDLE_WAITTIMEOUT) {
 
-		if(timeout()) {
+		socket_enterstate(socket, COMM_IDLE_WAITTIMEOUT);
+		socket_settimeout(socket, DEFAULT_COMM_IDLE_TIMEOUT);
+		result = SYS_OK;
 
-			if(app_state_index == 0) {
-				_state = COMM_IDLE_SETTIMEOUT;
-				comm_set_state(COMM_CONNECT);
-				app_state_index++;
-			} else if(app_state_index == 1) {
-				comm_set_state(COMM_SEND);
-				app_state_index = 0;
-			}
+	} else if(socket->state_handle.state == COMM_IDLE_WAITTIMEOUT) {
 
+		if(socket_timeout(socket)) {
+			socket_enterstate(socket, COMM_IDLE_SETTIMEOUT);
+			result = SYS_OK;
 		}
 	}
 
-	return SYS_OK;
+	return result;
 
-}
-
-static void set_timeout(uint32_t millis)
-{
-	max_wait_millis = millis / portTICK_RATE_MS;
-
-	/* Remember the time on entry. */
-	vTaskSetTimeOutState(&time_out_definition);
-
-}
-
-static bool timeout(void)
-{
-	bool timeout = false;
-
-	if (xTaskCheckForTimeOut(&time_out_definition, &max_wait_millis) == pdTRUE)
-	{
-//		printf("idle_timeout.\r\n");
-		timeout = true;
-	}
-
-	return timeout;
 }

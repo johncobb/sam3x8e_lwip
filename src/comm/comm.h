@@ -8,20 +8,26 @@
 #ifndef COMM_H_
 #define COMM_H_
 
+#include <stdio.h>
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
 
+#include "socket.h"
 #include "comm_init.h"
 #include "comm_config.h"
 #include "comm_register.h"
 #include "comm_idle.h"
-#include "comm_dispatch.h"
 #include "comm_connect.h"
 #include "comm_send.h"
 #include "comm_suspend.h"
+#include "comm_close.h"
 #include "comm_udp.h"
 #include "comm_http.h"
+
+
+
+
 
 //#define COMM_USE_MEMCPY	1
 
@@ -32,13 +38,18 @@ extern void comm_socket_close();
 
 xSemaphoreHandle comm_signal;
 
-extern xSemaphoreHandle connect_signal;
+extern xSemaphoreHandle tcp_connect_signal;
+extern xSemaphoreHandle tcp_send_signal;
+extern xSemaphoreHandle tcp_suspend_signal;
+extern xSemaphoreHandle tcp_close_signal;
+
 
 #define DEFAULT_COMM_SOCKETOPEN_TIMEOUT			10000
 #define DEFAULT_COMM_SOCKETRESUME_TIMEOUT		5000
 #define DEFAULT_COMM_SOCKETSTATUS_TIMEOUT		500
 #define DEFAULT_COMM_SOCKETSEND_TIMEOUT			1000
 #define DEFAULT_COMM_SOCKETSUSPEND_TIMEOUT		5000
+#define DEFAULT_COMM_SOCKETCLOSE_TIMEOUT		5000
 
 #define QUEUE_TICKS		16
 extern QueueHandle_t xCommQueue;
@@ -63,7 +74,8 @@ typedef enum
 	COMM_CONNECT,
 	COMM_SEND,
 	COMM_SUSPEND,
-	COMM_DISPATCH
+	COMM_CLOSE,
+	COMM_WAITNEXTSTATE
 }comm_state_t;
 
 typedef enum
@@ -79,7 +91,6 @@ typedef struct
 
 }comm_state_handler_t;
 
-
 typedef enum
 {
 	FRAME_TCP = 0,
@@ -93,7 +104,8 @@ typedef enum
 	REQUEST_SEND,
 	REQUEST_GET,
 	REQUEST_CLOSE,
-	REQUEST_ABORT
+	REQUEST_ABORT,
+	REQUEST_SUSPEND
 }comm_request_type_t;
 
 
@@ -112,19 +124,18 @@ typedef struct
 typedef struct
 {
 	comm_request_type_t type;
-	uint8_t socket_address;
-	uint32_t timeout;
-	uint8_t endpoint[SOCKET_ENDPOINT_LEN+1];
-	uint32_t len;
+	uint8_t endpoint[SOCKET_IPENDPOINT_LEN+1];
 
 }comm_request_t;
 
 
 
-
+extern volatile bool comm_ready;
 extern comm_state_t comm_state;
 
+void comm_enterstate(modem_socket_t *socket, comm_state_t state);
 void comm_set_state(comm_state_t state);
+void comm_set_socketstate(comm_state_t state, modem_socket_t *socket);
 
 
 void create_comm_task(uint16_t stack_depth_words, unsigned portBASE_TYPE task_priority);

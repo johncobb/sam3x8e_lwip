@@ -8,6 +8,7 @@
 #ifndef MODEM_DEFS_H_
 #define MODEM_DEFS_H_
 
+#include "socket.h"
 #include "modem.h"
 #include "modem_defs.h"
 
@@ -15,17 +16,6 @@ typedef void (*modem_func_t) (void);
 typedef sys_result (*callback_func_t)(void);
 typedef void (*callback_funcex_t)(char * token, uint8_t seconds, sys_result *result);
 typedef void (*callback_funcex_t)(char * token, uint8_t seconds, sys_result *result);
-typedef sys_result (*socket_func_t)(uint8_t *data, uint32_t len);
-
-
-//typedef struct
-//{
-//	uint8_t *cmd;
-//	char *result;
-//	uint32_t timeout;
-//	uint8_t retries;
-//	callback_funcex_t callback;
-//}at_command_t;
 
 typedef struct
 {
@@ -45,8 +35,6 @@ typedef struct
 }at_command_cnx_t;
 
 
-
-
 typedef struct
 {
 	uint8_t busy;
@@ -56,57 +44,13 @@ typedef struct
 	modem_cnx_status connection;
 }modem_status_t;
 
-typedef struct
-{
-	modem_socket_type type; // SOCKET_TCP, SOCKET_UDP
-	modem_socket_protocol protocol; // SOCKET_PROT_TCP, SOCKET_PROT_HTTP, SOCKET_PROT_UDP
-	uint16_t port;
-
-//	uint16_t linger_time; // optional
-//	uint16_t local_port; // optional
-
-}modem_socket_conf_t;
-
-#define SOCKET_BUFFER_LEN		128
-#define SOCKET_ENDPOINT_LEN		256
-
-typedef enum
-{
-	SOCKET_CLOSED = 0,
-	SOCKET_ACTIVE_DATATRANSFER,
-	SOCKET_SUSPENDED,
-	SOCKET_SUSPENDED_PENDINGDATA,
-	SOCKET_LISTENING,
-	SOCKET_INCOMINGCONNECTION
-}socket_state_t;
-
-// cnx_id, ctx_id, pkt_size, glb_timeout, cnx_timeout (tenths of second), tx_timeout (tenths of second)
-typedef struct
-{
-	uint8_t cnx_id;			// connection id
-	uint8_t ctx_id;			// context id
-	uint16_t pkt_size;		// packet size
-	uint16_t glb_timeout;	// global timeout
-	uint16_t cnx_timeout;	// connection timeout
-	uint16_t tx_timeout;	// transmit timeout
-	socket_state_t socket_status;
-	uint8_t endpoint[SOCKET_ENDPOINT_LEN+1];
-	modem_socket_conf_t socket_conf;
-	socket_func_t handle_data;
-	uint8_t data_buffer[SOCKET_BUFFER_LEN+1];
-	uint32_t bytes_received;
-
-}modem_socket_t;
-
-
-
-
 extern modem_status_t modem_status;
-extern modem_socket_t modem_sockets[];
 
 
 #define SCRATCH_BUFFER_LEN			256
 uint8_t scratch_buffer[SCRATCH_BUFFER_LEN];
+
+#define MODEM_SOCKET_IPENDPOINT	"bs.cphandheld.com" // 1888
 
 
 //#define MODEM_DEFAULT_HTTPSERVER	"www.google.com"
@@ -121,14 +65,7 @@ uint8_t scratch_buffer[SCRATCH_BUFFER_LEN];
 #define MODEM_DEFAULT_SOCKETSUSPEND_TIMEOUT		5000
 
 
-
-#define MODEM_RESULT_NODATA			0X00
-#define MODEM_RESULT_FOUND			0X01
-#define MODEM_RESULT_ERROR			0X02
-#define MODEM_RESULT_NOCARRIER		0X03
-
-
-// *** MODEM SPECIFIC TOKENS ***
+// *** modem tokens ***
 #define MODEM_TOKEN_OK				"OK"
 #define MODEM_TOKEN_ERROR			"ERROR"
 #define MODEM_TOKEN_CONNECT			"CONNECT"
@@ -147,11 +84,7 @@ uint8_t scratch_buffer[SCRATCH_BUFFER_LEN];
 #define MODEM_TOKEN_SOCKETSTATUS_ID	"#SS: %d"
 #define MODEM_TOKEN_REMOTECMD		"$"
 
-
-
-
-
-
+// *** modem at commands ***
 #define CR							'\r'
 #define LF							'\n'
 #define MODEM_CMD_CTRLZ				0x1a

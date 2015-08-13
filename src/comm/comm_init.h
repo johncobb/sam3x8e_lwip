@@ -8,7 +8,7 @@
 #ifndef COMM_INIT_H_
 #define COMM_INIT_H_
 
-#include "modem.h"
+#include "socket.h"
 
 sys_result comm_init(void);
 

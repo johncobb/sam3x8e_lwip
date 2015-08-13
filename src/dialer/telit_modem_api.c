@@ -342,12 +342,14 @@ sys_result modem_handle_querysignal(void)
 
 }
 
-sys_result modem_handle_socketopen(void)
+sys_result modem_handle_socketopen(modem_socket_t *socket)
 {
 	char * ptr = NULL;
 	sys_result sys_status;
 
-	sys_status = handle_result(MODEM_TOKEN_CONNECT, &ptr);
+//	sys_status = handle_result(MODEM_TOKEN_CONNECT, &ptr);
+
+	sys_status = handle_result_ex(socket->rx_buffer, MODEM_TOKEN_CONNECT, &ptr);
 
 	printf("buffer:%s\r\n", ptr);
 
@@ -359,7 +361,7 @@ sys_result modem_handle_socketopen(void)
 	return sys_status;
 }
 
-sys_result modem_handle_socketclose(void)
+sys_result modem_handle_socketclose(modem_socket_t *socket)
 {
 	char * ptr = NULL;
 	sys_result sys_status;
@@ -375,12 +377,13 @@ sys_result modem_handle_socketclose(void)
 
 }
 
-sys_result modem_handle_socketresume(void)
+sys_result modem_handle_socketresume(modem_socket_t *socket)
 {
 	char * ptr = NULL;
 	sys_result sys_status;
 
-	sys_status = handle_result(MODEM_TOKEN_CONNECT, &ptr);
+//	sys_status = handle_result(MODEM_TOKEN_CONNECT, &ptr);
+	sys_status = handle_result_ex(socket->rx_buffer, MODEM_TOKEN_CONNECT, &ptr);
 
 	if(sys_status == SYS_AT_OK) {
 		modem_status.connection = CNX_OPENED;
@@ -391,12 +394,13 @@ sys_result modem_handle_socketresume(void)
 
 }
 
-sys_result modem_handle_socketsuspend(void)
+sys_result modem_handle_socketsuspend(modem_socket_t *socket)
 {
 	char * ptr = NULL;
 	sys_result sys_status;
 
-	sys_status = handle_result(MODEM_TOKEN_OK, &ptr);
+//	sys_status = handle_result(MODEM_TOKEN_OK, &ptr);
+	sys_status = handle_result_ex(socket->rx_buffer, MODEM_TOKEN_OK, &ptr);
 
 	if(sys_status == SYS_AT_OK) {
 		modem_status.connection = CNX_SUSPENDED;
@@ -428,7 +432,7 @@ sys_result modem_handle_socketwrite(modem_socket_t *socket)
 {
 
 
-	socket->bytes_received = handle_stream(socket->data_buffer, SOCKET_BUFFER_LEN, MODEM_DEFAULT_SOCKETWRITE_TIMEOUT);
+	socket->bytes_received = handle_stream(socket->rx_buffer, SOCKET_BUFFER_LEN, MODEM_DEFAULT_SOCKETWRITE_TIMEOUT);
 
 	//printf("socket->bytes_received=%lu\r\n", socket->bytes_received);
 	return SYS_OK;
@@ -444,9 +448,8 @@ uint8_t modem_handle_socketstatus(modem_socket_t *socket)
 	char * ptr = NULL;
 	sys_result sys_status;
 
-	//sys_status = handle_result(MODEM_TOKEN_SOCKETSTATUS, &ptr);
-
-	sys_status = handle_result(scratch_buffer, &ptr);
+//	sys_status = handle_result(scratch_buffer, &ptr);
+	sys_status = handle_result_ex(socket->rx_buffer, scratch_buffer, &ptr);
 
 	/*
 	 * example result:
@@ -464,7 +467,7 @@ uint8_t modem_handle_socketstatus(modem_socket_t *socket)
 	if(sys_status == SYS_AT_OK) {
 		printf("buffer:%s\r\n", ptr);
 		ptr+=7;
-		modem_sockets[socket_index].socket_status = ((ptr[0]-'0'));
+		modem_sockets[socket_index].modem_socket_state = ((ptr[0]-'0'));
 
 		//printf("creg: %d\r\n", modem_status.creg);
 	}

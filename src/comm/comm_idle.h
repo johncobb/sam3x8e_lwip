@@ -8,10 +8,10 @@
 #ifndef COMM_IDLE_H_
 #define COMM_IDLE_H_
 
-#include "modem.h"
+#include "socket.h"
 
 #define DEFAULT_COMM_IDLE_TIMEOUT	1000
 
-sys_result comm_idle(void);
+sys_result  comm_idle(modem_socket_t * socket);
 
 #endif /* COMM_IDLE_H_ */

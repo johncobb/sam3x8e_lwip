@@ -133,7 +133,10 @@ sys_result  comm_register(void)
 			// check to see if command was successful
 			// if so proceed
 			if(modem_status.context == 1) {
-				comm_set_state(COMM_IDLE);
+				//comm_set_state(COMM_IDLE);
+				// TODO: IT ALL BEGINS HERE SO PASS IN THE FIRST SOCKET
+				comm_ready = true;
+				comm_enterstate(_socket, COMM_IDLE);
 				result = SYS_OK;
 			} else {
 				// toggle between DISPATCH and WAITREPLY

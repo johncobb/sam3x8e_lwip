@@ -14,8 +14,10 @@
 #include "freertos_usart_serial.h"
 #include "board.h"
 #include "sys_arch.h"
+#include "socket.h"
+#include "comm_if.h"
 #include "telit_modem_api.h"
-#include "http_handler.h"
+
 
 
 #define RX_BUFFER_LEN		128
@@ -33,26 +35,6 @@ void basic_handler(void);
 
 void pause(void);
 
-
-
-//"AT#SCFG=1,1,512,90,600,2\r"
-modem_socket_t modem_sockets[] =
-{
-		// cnx_id, ctx_id, pkt_size, glb_timeout, cnx_timeout (tenths of second), tx_timeout (tenths of second)
-		// socket_status, endpoint
-		// protocol, address, port
-		// function_handler, data_buffer, bytes_received
-		//{1, 1, 512, 90, 600, 2, 0, {SOCKET_TCP, SOCKET_PROT_HTTP, 80}, http_handle_data, {0}, 0},
-		{1, 1, 512, 90, 600, 2, 0, {0}, {SOCKET_TCP, SOCKET_PROT_HTTP, 1888}, http_handle_data, {0}, 0},
-		{2, 1, 512, 90, 600, 2, 0, {0}, {SOCKET_TCP, SOCKET_PROT_HTTP, 1888}, http_handle_data, {0}, 0},
-//		{2, 1, 512, 90, 600, 2, 0, {0}, {SOCKET_TCP, SOCKET_PROT_TCP, 80}, NULL, {0}, 0},
-//		{3, 1, 512, 90, 600, 2},
-//		{4, 1, 512, 90, 600, 2},
-//		{5, 1, 512, 90, 600, 2},
-//		{6, 1, 512, 90, 600, 2},
-		{0, 0, 0, 0, 0}
-
-};
 
 
 uint32_t timeout = 0;
@@ -407,6 +389,37 @@ sys_result handle_result(char * token, char ** ptr_out)
 	// set ptr_out to the rx_buffer for troubleshooting
 	if(ptr_out != NULL) {
 		*ptr_out = modem_rx_buffer;
+	}
+
+}
+
+sys_result handle_result_ex(uint8_t * rx_buffer, char * token, char ** ptr_out)
+{
+	//if((ptr = strstr(input_string, token))) {
+	if((ptr = strstr(rx_buffer, token))) {
+		if(ptr_out != NULL) {
+			*ptr_out = ptr;
+		}
+		//printf("SYS_AT_OK\r\n");
+		return SYS_AT_OK;
+	} else if ((ptr = strstr(rx_buffer, MODEM_TOKEN_ERROR))) {
+		if(ptr_out != NULL) {
+			*ptr_out = ptr;
+		}
+		printf("SYS_ERR_AT_FAIL\r\n");
+		return SYS_ERR_AT_FAIL;
+	} else if((ptr = strstr(rx_buffer, MODEM_TOKEN_NOCARRIER))) {
+		if(ptr_out != NULL) {
+			*ptr_out = ptr;
+		}
+		printf("SYS_ERR_AT_NOCARRIER\r\n");
+		return SYS_ERR_AT_NOCARRIER;
+	}
+
+
+	// set ptr_out to the rx_buffer for troubleshooting
+	if(ptr_out != NULL) {
+		*ptr_out = rx_buffer;
 	}
 
 }

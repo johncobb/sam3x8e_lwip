@@ -62,10 +62,10 @@ uint8_t modem_handle_querycontext(void);
 uint8_t modem_handle_querynetwork(void);
 uint8_t modem_handle_querysignal(void);
 
-uint8_t modem_handle_socketopen(void);
-uint8_t modem_handle_socketclose(void);
-uint8_t modem_handle_socketresume(void);
-uint8_t modem_handle_socketsuspend(void);
+sys_result modem_handle_socketopen(modem_socket_t *socket);
+uint8_t modem_handle_socketclose(modem_socket_t *socket);
+sys_result modem_handle_socketresume(modem_socket_t *socket);
+uint8_t modem_handle_socketsuspend(modem_socket_t *socket);
 //uint8_t modem_handle_socketwrite(char *token);
 sys_result modem_handle_socketwrite(modem_socket_t *socket);
 uint8_t modem_handle_socketstatus(modem_socket_t *socket);
