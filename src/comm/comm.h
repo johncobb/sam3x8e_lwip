@@ -75,7 +75,8 @@ typedef enum
 	COMM_SEND,
 	COMM_SUSPEND,
 	COMM_CLOSE,
-	COMM_WAITNEXTSTATE
+	COMM_WAITNEXTSTATE,
+	COMM_WAITSOCKETREQUEST
 }comm_state_t;
 
 typedef enum
@@ -135,7 +136,6 @@ extern comm_state_t comm_state;
 
 void comm_enterstate(modem_socket_t *socket, comm_state_t state);
 void comm_set_state(comm_state_t state);
-void comm_set_socketstate(comm_state_t state, modem_socket_t *socket);
 
 
 void create_comm_task(uint16_t stack_depth_words, unsigned portBASE_TYPE task_priority);

@@ -37,6 +37,7 @@ at_modem_cmd_t at_cfg_commands[] =
 		{modem_setcontext, 		1000, 0, false},
 		{modem_setuserid, 		1000, 0, false},
 		{modem_setpassword, 	1000, 0, false},
+		{modem_setguardtime, 	1000, 0, false},
 		{modem_skipesc, 		1000, 0, false},
 		{modem_socketconfig, 	1000, 0, false},
 		{modem_mobileequiperr, 	1000, 0, false},

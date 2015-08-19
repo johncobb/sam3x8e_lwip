@@ -29,7 +29,7 @@ sys_result  comm_close(modem_socket_t * socket)
 	if(socket->state_handle.state == COMM_CLOSE_CONNECTION) {
 
 		if(socket->state_handle.substate == COMM_CLOSE_INVOKE) {
-			printf("socket close...\r\n");
+			printf("socket(%d) close...\r\n", socket->socket_id);
 
 			modem_socketclose(socket);
 			socket_entersubstate(socket, COMM_CLOSE_WAITREPLY);
@@ -39,7 +39,7 @@ sys_result  comm_close(modem_socket_t * socket)
 		} else if(socket->state_handle.substate  == COMM_CLOSE_WAITREPLY) {
 
 			if(socket_timeout(socket)) {
-				printf("socket close timeout.\r\n");
+				printf("socket(%d) close timeout.\r\n", socket->socket_id);
 				comm_enterstate(socket, COMM_IDLE);
 				socket_exitstate(socket);
 				xSemaphoreGive(tcp_close_signal);

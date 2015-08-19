@@ -40,7 +40,7 @@ sys_result  comm_connect(modem_socket_t * socket)
 	if(socket->state_handle.state == COMM_CONNECT_STATUS) {
 
 		if(socket->state_handle.substate == COMM_CONNECT_INVOKE) {
-			printf("comm socket status?\r\n");
+			printf("comm(%d) socket status?\r\n", socket->socket_id);
 
 			modem_socketstatus(socket);
 			socket_entersubstate(socket, COMM_CONNECT_WAITREPLY);
@@ -50,7 +50,7 @@ sys_result  comm_connect(modem_socket_t * socket)
 		} else if(socket->state_handle.substate == COMM_CONNECT_WAITREPLY) {
 
 			if(socket_timeout(socket)) {
-				printf("comm socket status timeout.\r\n");
+				printf("comm(%d) socket status timeout.\r\n", socket->socket_id);
 				socket_enterstate(socket, COMM_CONNECT_OPEN);
 			}
 
@@ -72,7 +72,7 @@ sys_result  comm_connect(modem_socket_t * socket)
 				}
 				case SOCKET_SUSPENDED:
 				case SOCKET_SUSPENDED_PENDINGDATA: {
-					 printf("socket_suspended.\r\n");
+					 printf("socket(%d) suspended.\r\n", socket->socket_id);
 					 socket_enterstate(socket, COMM_CONNECT_RESUME);
 					 break;
 				}
@@ -88,7 +88,7 @@ sys_result  comm_connect(modem_socket_t * socket)
 	if(socket->state_handle.state == COMM_CONNECT_RESUME) {
 
 		if(socket->state_handle.substate == COMM_CONNECT_INVOKE) {
-			printf("modem_socketresume...\r\n");
+			printf("socket(%d) resume...\r\n", socket->socket_id);
 
 			modem_socketresume(socket);
 			socket_entersubstate(socket, COMM_CONNECT_WAITREPLY);
@@ -98,7 +98,7 @@ sys_result  comm_connect(modem_socket_t * socket)
 		} else if(socket->state_handle.substate == COMM_CONNECT_WAITREPLY) {
 
 			if(socket_timeout(socket)) {
-				printf("comm socket resume timeout.\r\n");
+				printf("socket(%d) resume timeout.\r\n", socket->socket_id);
 				socket_enterstate(socket, COMM_CONNECT_OPEN);
 			}
 
@@ -123,7 +123,7 @@ sys_result  comm_connect(modem_socket_t * socket)
 	if(socket->state_handle.state == COMM_CONNECT_OPEN) {
 
 		if(socket->state_handle.substate == COMM_CONNECT_INVOKE) {
-			printf("modem_socketopen...\r\n");
+			printf("socket(%d) open...\r\n", socket->socket_id);
 
 			modem_socketopen(socket);
 			socket_entersubstate(socket, COMM_CONNECT_WAITREPLY);
@@ -134,7 +134,7 @@ sys_result  comm_connect(modem_socket_t * socket)
 
 			if(socket_timeout(socket)) {
 				socket->socket_error = SCK_ERR_TIMEOUT;
-				printf("comm socket open timeout.\r\n");
+				printf("socket(%d) open timeout.\r\n", socket->socket_id);
 				comm_enterstate(socket, COMM_IDLE);
 				socket_exitstate(socket);
 				// TODO: review options for state transition after connect
@@ -145,8 +145,14 @@ sys_result  comm_connect(modem_socket_t * socket)
 
 			if(result == SYS_AT_OK) {
 				socket->socket_status = SCK_OPENED;
-				comm_enterstate(socket, COMM_IDLE);
-				socket_exitstate(socket);
+//				comm_enterstate(socket, COMM_IDLE);
+
+//				comm_enterstate(socket, COMM_SUSPEND);
+//				socket_exitstate(socket);
+
+				socket_entersubstate(socket, COMM_CONNECT_SUSPEND);
+				socket_settimeout(socket, DEFAULT_COMM_SOCKETSUSPEND_TIMEOUT);
+
 				// TODO: review options for state transition after connect
 				xSemaphoreGive(tcp_connect_signal);
 			}
@@ -160,9 +166,11 @@ sys_result  comm_connect(modem_socket_t * socket)
 	if(socket->state_handle.state == COMM_CONNECT_SUSPEND) {
 
 		if(socket->state_handle.substate == COMM_CONNECT_INVOKE) {
-			printf("modem_suspend...\r\n");
+			printf("socket(%d) suspend...\r\n", socket->socket_id);
 
+			vTaskDelay(MODEM_DEFUALT_ESCAPEGUARD_TIMEOUT);
 			modem_socketsuspend(socket);
+			vTaskDelay(MODEM_DEFUALT_ESCAPEGUARD_TIMEOUT);
 			socket_entersubstate(socket, COMM_CONNECT_WAITREPLY);
 
 			return SYS_OK;

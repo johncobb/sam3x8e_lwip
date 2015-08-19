@@ -25,7 +25,7 @@ sys_result  comm_idle(modem_socket_t * socket)
 
 	if(socket->state_handle.state == COMM_IDLE_SETTIMEOUT) {
 
-		printf("comm_idle\r\n");
+		printf("socket(%d) idle.\r\n", socket->socket_id);
 		printf("wait %d sec.\r\n", DEFAULT_COMM_IDLE_TIMEOUT/1000);
 
 		socket_enterstate(socket, COMM_IDLE_WAITTIMEOUT);

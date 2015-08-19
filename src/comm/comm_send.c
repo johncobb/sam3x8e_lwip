@@ -39,7 +39,7 @@ sys_result  comm_send(modem_socket_t * socket)
 	if(socket->state_handle.state == COMM_SEND_TRANSFERDATA) {
 
 		if(socket->state_handle.substate == COMM_SEND_INVOKE) {
-			printf("modem_socketwrite...\r\n");
+			printf("socket(%d) write...\r\n", socket->socket_id);
 
 			//char * data = MODEM_DEFAULT_HTTPREQUEST;
 
@@ -59,7 +59,7 @@ sys_result  comm_send(modem_socket_t * socket)
 			if(socket_timeout(socket)) {
 				socket->socket_error = SCK_ERR_TIMEOUT;
 
-				printf("comm send timeout\r\n");
+				printf("socket(%d) send timeout\r\n", socket->socket_id);
 
 				// TODO: review for proper transition after send
 				// option 1: after sending suspend the connection

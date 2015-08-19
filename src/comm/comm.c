@@ -25,6 +25,7 @@
 
 
 void unit_test_commidle(void);
+void unit_test_guardtime(void);
 
 QueueHandle_t xCommQueue;
 QueueHandle_t xCommQueueRequest;
@@ -41,12 +42,13 @@ volatile bool comm_ready = false;
 
 modem_socket_t modem_sockets[] =
 {
-		// cnx_id, ctx_id, pkt_size, glb_timeout, cnx_timeout (tenths of second), tx_timeout (tenths of second)
+		// socket_id, cnx_id, ctx_id, pkt_size, glb_timeout, cnx_timeout (tenths of second), tx_timeout (tenths of second)
 		// socket_status, endpoint
 		// protocol, address, port
 		// function_handler, data_buffer, bytes_received
-		{1, 1, 512, 90, 600, 2, 0, {SOCKET_TCP, SOCKET_PROT_HTTP, 1888}, {0}, {0}, http_handle_data, 0, comm_idle, {0,0,0,0}, 0, 0},
-		{2, 1, 512, 90, 600, 2, 0, {SOCKET_TCP, SOCKET_PROT_HTTP, 1888}, {0}, {0}, http_handle_data, 0, comm_idle, {0,0,0,0}, 0, 0},
+//		{0, 1, 1, 512, 90, 600, 2, 0, {SOCKET_TCP, SOCKET_PROT_HTTP, 1888}, {0}, {0}, http_handle_data, 0, comm_idle, {0,0,0,0}, 0, 0},
+		{0, 1, 1, 512, 90, 600, 2, 0, {SOCKET_TCP, SOCKET_PROT_HTTP, 1889}, {0}, {0}, http_handle_data, 0, comm_idle, {0,0,0,0}, 0, 0},
+		{1, 2, 1, 512, 90, 600, 2, 0, {SOCKET_TCP, SOCKET_PROT_HTTP, 1889}, {0}, {0}, http_handle_data, 0, comm_idle, {0,0,0,0}, 0, 0},
 		{0, 0, 0, 0, 0}
 };
 
@@ -86,31 +88,16 @@ void create_comm_task(uint16_t stack_depth_words, unsigned portBASE_TYPE task_pr
 
 }
 
-void comm_set_socketstate(comm_state_t state, modem_socket_t *socket)
-{
-	switch(state) {
-		case COMM_IDLE:
-			socket->task_handler = comm_idle;
-			break;
-		case COMM_CONNECT:
-			socket->task_handler = comm_connect;
-			break;
-		case COMM_SEND:
-			socket->task_handler = comm_send;
-			break;
-		case COMM_SUSPEND:
-			socket->task_handler = comm_suspend;
-			break;
-		case COMM_CLOSE:
-			socket->task_handler = comm_close;
-			break;
-	}
-}
-
 void comm_enterstate(modem_socket_t *socket, comm_state_t state)
 {
 
+
 	comm_state = state;
+
+	// we can set a state while passing in a null socket
+	if(socket == NULL) {
+		return;
+	}
 
 	// TODO: REVIEW NEW CODE TO RESET STATE on comm_enterstate
 	socket->state_handle.state = 0;
@@ -162,6 +149,22 @@ comm_task_t task_mgr;
 
 static void next_socket(void)
 {
+	// TODO: temporary code
+	if(socket_index == 0) {
+		socket_index = 1;
+		_socket = &(modem_sockets[socket_index]);
+		return;
+	}
+
+	if(socket_index == 1) {
+		socket_index = 0;
+		_socket = &(modem_sockets[socket_index]);
+		return;
+	}
+	// TODO: end temporary code
+
+
+
 	// sanity check
 	if(++socket_index == (SOCKET_POOL_LEN-1))
 		socket_index = 0;
@@ -169,10 +172,15 @@ static void next_socket(void)
 	_socket = &(modem_sockets[socket_index]);
 }
 
+static volatile bool _nextsocket = false;
+static volatile bool _waitsuspend = false;
+
 static void comm_handler_task(void *pvParameters)
 {
 
 	_socket = &(modem_sockets[socket_index]);
+
+//	_socket = &(modem_sockets[1]);
 
 	task_mgr = NULL;
 
@@ -201,7 +209,15 @@ static void comm_handler_task(void *pvParameters)
 			comm_register();
 		}
 
+		if(comm_state == COMM_WAITSOCKETREQUEST) {
+			printf("waiting socket request...\r\n");
+			vTaskDelay(1000);
+		}
+
+
 		if(comm_state == COMM_IDLE || comm_state == COMM_CONNECT || comm_state == COMM_SEND || comm_state == COMM_SUSPEND || comm_state == COMM_CLOSE) {
+
+
 
 //			if(comm_state == COMM_CONNECT) {
 //				memset(_socket->endpoint, '\0', SOCKET_IPENDPOINT_LEN+1);
@@ -219,6 +235,16 @@ static void comm_handler_task(void *pvParameters)
 
 //			next_socket();
 		}
+
+//		if(comm_state == COMM_IDLE) {
+//
+//			if(socket_index == 0)
+//				socket_index = 1;
+//			else if(socket_index == 1)
+//				socket_index = 0;
+//
+//			_socket = &(modem_sockets[socket_index]);
+//		}
 
 
 		if(comm_ready) {
@@ -255,7 +281,7 @@ static void request_queue(void)
 
 			//printf("request_queue: endpoint: %s\r\n", request.endpoint);
 
-			memcpy(_socket->endpoint, request.endpoint, SOCKET_IPENDPOINT_LEN);
+//			memcpy(_socket->endpoint, request.endpoint, SOCKET_IPENDPOINT_LEN);
 			comm_enterstate(_socket, COMM_CONNECT);
 		}
 
@@ -313,6 +339,37 @@ void unit_test_commidle(void)
 	if(comm_state == COMM_IDLE) {
 		comm_idle(&(modem_sockets[socket_index]));
 	}
+
+	// TODO: HACK TO TEST ABOVE CODE
+	vTaskDelay(10);
+
+}
+
+comm_state_t last_state = 255;
+
+void unit_test_guardtime(void)
+{
+
+	if(last_state == comm_state)
+		return;
+	// take a breather
+
+	if(comm_state == COMM_CONNECT) {
+		comm_enterstate(_socket, COMM_SUSPEND);
+		last_state = comm_state;
+	}
+
+	if(comm_state == COMM_SUSPEND) {
+		comm_enterstate(_socket, COMM_CONNECT);
+		last_state = comm_state;
+	}
+
+	if(comm_state == COMM_IDLE) {
+		comm_enterstate(_socket, COMM_CONNECT);
+		last_state = comm_state;
+	}
+
+
 
 	// TODO: HACK TO TEST ABOVE CODE
 	vTaskDelay(10);

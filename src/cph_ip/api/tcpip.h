@@ -37,7 +37,8 @@ tcp_result tcp_output(void);
 
 tcp_result cph_tcp_connect(socket_connection_t *cnx);
 tcp_result cph_tcp_send(socket_connection_t *cnx, uint8_t *packet, socket_func_t handler);
-tcp_result cph_tcp_suspend();
+tcp_result cph_tcp_suspend(socket_connection_t *cnx);
+tcp_result cph_tcp_resume(socket_connection_t *cnx);
 tcp_result cph_tcp_close();
 tcp_result cph_tcp_listen(uint8_t *endpoint, uint32_t len);
 

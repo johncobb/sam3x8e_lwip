@@ -136,7 +136,12 @@ sys_result  comm_register(void)
 				//comm_set_state(COMM_IDLE);
 				// TODO: IT ALL BEGINS HERE SO PASS IN THE FIRST SOCKET
 				comm_ready = true;
-				comm_enterstate(_socket, COMM_IDLE);
+//				comm_enterstate(_socket, COMM_IDLE);
+				// TODO: new code
+				// we have not had our first socket initialized so
+				// pass in a null for the socket and tell the state
+				// machine to await the first socket request
+				comm_enterstate(NULL, COMM_WAITSOCKETREQUEST);
 				result = SYS_OK;
 			} else {
 				// toggle between DISPATCH and WAITREPLY

@@ -54,6 +54,11 @@ void modem_setpassword(void)
 	SEND_AT(MODEM_CMD_SETPASSWORD);
 }
 
+void modem_setguardtime(void)
+{
+	SEND_AT(MODEM_CMD_SETGUARDTIME);
+}
+
 void modem_skipesc(void)
 {
 	SEND_AT(MODEM_CMD_SKIPESC);

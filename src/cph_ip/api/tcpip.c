@@ -84,10 +84,6 @@ void cph_tcp_newrequest(socket_connection_t *cnx, comm_request_t *request)
 	memcpy(request->endpoint, cnx->endpoint, SOCKET_IPENDPOINT_LEN);
 	request->type = REQUEST_CONNECT;
 
-	//cnx->request->socket_address = 0;
-	//cnx->request->socket_address = cnx->socket->cnx_id;
-	//cnx->request->type = REQUEST_CONNECT;
-	//cnx->request->timeout = timeout;
 }
 
 
@@ -172,19 +168,28 @@ tcp_result cph_tcp_send(socket_connection_t *cnx, uint8_t *packet, socket_func_t
 
 }
 
-tcp_result cph_tcp_suspend()
+tcp_result cph_tcp_suspend(socket_connection_t *cnx)
 {
 	// TODO: SEMAPHORE TAKE GIVE TASK NOTIFY
-	BaseType_t result;
+	tcp_result result;
 
 	comm_request_t request;
 
 	request.type = REQUEST_SUSPEND;
 
-	result = xQueueSendToBack( xCommQueueRequest, &request, (TickType_t)0);
+	if(xQueueSendToBack( xCommQueueRequest, &request, (TickType_t)0) == pdTRUE) {
+		while(true) {
 
-	if(result == pdTRUE) {
-		//printf("request enqueued.\r\n");
+			if(cnx->socket->socket_error > 0) {
+				result = SYS_ERR_TCP_FAIL;
+				break;
+			}
+
+			if(cnx->socket->socket_status == SCK_SUSPENDED) {
+				result = SYS_TCP_OK;
+				break;
+			}
+		}
 	}
 
 	if(xSemaphoreTake(tcp_suspend_signal, portMAX_DELAY)) {
@@ -192,7 +197,41 @@ tcp_result cph_tcp_suspend()
 	}
 
 
-	socket_free();
+//	socket_free();
+	return result;
+
+}
+
+tcp_result cph_tcp_resume(socket_connection_t *cnx)
+{
+	// TODO: SEMAPHORE TAKE GIVE TASK NOTIFY
+	tcp_result result;
+
+	comm_request_t request;
+
+	request.type = REQUEST_CONNECT;
+
+	if(xQueueSendToBack( xCommQueueRequest, &request, (TickType_t)0) == pdTRUE) {
+		while(true) {
+
+			if(cnx->socket->socket_error > 0) {
+				result = SYS_ERR_TCP_FAIL;
+				break;
+			}
+
+			if(cnx->socket->socket_status == SCK_OPENED) {
+				result = SYS_TCP_OK;
+				break;
+			}
+		}
+	}
+
+	if(xSemaphoreTake(tcp_suspend_signal, portMAX_DELAY)) {
+		//printf("tcp_connect: connected.\r\n");
+	}
+
+
+//	socket_free();
 	return SYS_TCP_OK;
 
 }
@@ -216,7 +255,7 @@ tcp_result cph_tcp_close()
 		//printf("tcp_connect: connected.\r\n");
 	}
 
-
+	socket_free();
 	return SYS_TCP_OK;
 
 }

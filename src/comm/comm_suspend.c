@@ -30,9 +30,13 @@ sys_result  comm_suspend(modem_socket_t * socket)
 	if(socket->state_handle.state == COMM_SUSPEND_CONNECTION) {
 
 		if(socket->state_handle.substate == COMM_SUSPEND_INVOKE) {
-			printf("socket suspend...\r\n");
+			printf("socket(%d) suspend...\r\n", socket->socket_id);
 
+
+			vTaskDelay(MODEM_DEFUALT_ESCAPEGUARD_TIMEOUT);
 			modem_socketsuspend(socket);
+			vTaskDelay(MODEM_DEFUALT_ESCAPEGUARD_TIMEOUT);
+
 			socket_entersubstate(socket, COMM_SUSPEND_WAITREPLY);
 			socket_settimeout(socket, DEFAULT_COMM_SOCKETSUSPEND_TIMEOUT);
 
@@ -40,7 +44,7 @@ sys_result  comm_suspend(modem_socket_t * socket)
 		} else if(socket->state_handle.substate  == COMM_SUSPEND_WAITREPLY) {
 
 			if(socket_timeout(socket)) {
-				printf("socket suspend timeout.\r\n");
+				printf("socket(%d) suspend timeout.\r\n", socket->socket_id);
 				comm_enterstate(socket, COMM_IDLE);
 				socket_exitstate(socket);
 				xSemaphoreGive(tcp_suspend_signal);

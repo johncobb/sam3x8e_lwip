@@ -16,9 +16,6 @@
 #include "semphr.h"
 #include "freertos_usart_serial.h"
 #include "sysclk.h"
-//#include "modem_defs.h"
-//#include "modem.h"
-//#include "comm.h"
 #include "tcpip.h"
 #include "app_task.h"
 
@@ -93,10 +90,14 @@ static sys_result parse_result(char * buffer, char * token, char ** ptr_out)
 static void app_handler_task(void *pvParameters)
 {
 
-	uint8_t * ip_endpoint = "bs.cphandheld.com";
+//	uint8_t * ip_endpoint = "bs.cphandheld.com";
+	uint8_t * ip_endpoint = "96.27.198.215";
+//	uint8_t * ip_endpoint2 = "96.27.198.215";
+
 	uint8_t * packet = "20000000,01,01,00000007802F6399,E16B,00000007802DE16B,1973,16,0001,0000,00C3,0000,0001,EE000000,470000EE\r";
 
 	socket_connection_t sck_connection;
+//	socket_connection_t sck_connection2;
 
 	xSemaphoreGive(app_start_signal);
 
@@ -109,9 +110,17 @@ static void app_handler_task(void *pvParameters)
 
 			// create a new socket connection
 			socket_newconnection(&sck_connection, ip_endpoint, DEFAULT_TCIP_CONNECTTIMEOUT);
+//			socket_newconnection(&sck_connection2, ip_endpoint2, DEFAULT_TCIP_CONNECTTIMEOUT);
+
+			printf("sck0: %s:%d\r\n", sck_connection.socket->endpoint, sck_connection.socket->socket_conf.port);
+//			printf("sck1: %s:%d\r\n", sck_connection2.socket->endpoint, sck_connection2.socket->socket_conf.port);
 
 			// establish a connection
+			printf("cph_tcp_connect\r\n");
 			tcp_result result = cph_tcp_connect(&sck_connection);
+//			printf("cph_tcp_connect\r\n");
+//			tcp_result result2 = cph_tcp_connect(&sck_connection2);
+
 
 			if(result == SYS_TCP_OK) {
 				printf("successfully connected.\r\n");
@@ -119,7 +128,7 @@ static void app_handler_task(void *pvParameters)
 				// send a message once per second
 				while(true) {
 					result = cph_tcp_send(&sck_connection, packet, app_data_handler);
-					vTaskDelay(1000);
+
 				}
 			}
 		}

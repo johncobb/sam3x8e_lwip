@@ -252,8 +252,16 @@ static const CLI_Command_Definition_t tcp_suspend_definition =
 
 void dispatch_tcp_suspend(void)
 {
-	char * packet = "20000000,01,01,00000007802F6399,E16B,00000007802DE16B,1973,16,0001,0000,00C3,0000,0001,EE000000,470000EE\r";
-	cph_tcp_suspend();
+	char * endpoint = "bs.cphandheld.com";
+
+	socket_connection_t cnx;
+
+	memset(cnx.endpoint, '\0', SOCKET_IPENDPOINT_LEN+1);
+	memset(cnx.endpoint, endpoint, SOCKET_IPENDPOINT_LEN+1);
+
+	cnx.handler = http_handle_data;
+
+	cph_tcp_suspend(&cnx);
 }
 
 

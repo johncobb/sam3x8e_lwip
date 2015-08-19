@@ -64,6 +64,9 @@ uint8_t scratch_buffer[SCRATCH_BUFFER_LEN];
 #define MODEM_DEFAULT_SOCKETWRITE_TIMEOUT		10000
 #define MODEM_DEFAULT_SOCKETSUSPEND_TIMEOUT		5000
 
+// TODO: tunable parameter must change based on S12: MODEM_CMD_SETGUARDTIME
+#define MODEM_DEFUALT_ESCAPEGUARD_TIMEOUT		50
+
 
 // *** modem tokens ***
 #define MODEM_TOKEN_OK				"OK"
@@ -113,6 +116,7 @@ uint8_t scratch_buffer[SCRATCH_BUFFER_LEN];
 #define MODEM_CMD_QUERYCONTEXT		"AT#SGACT?\r"
 #define MODEM_CMD_DEACTCONTEXT		"AT#SGACT=1,0\r"
 #define MODEM_CMD_LISTENUDP			"AT#SLUDP=1,1,3500\r"
+#define MODEM_CMD_SETGUARDTIME		"ATS12=2\r" // fiftiety of a second so (.02*2)=.04 seconds
 #define MODEM_CMD_SKIPESC			"AT#SKIPESC=1\r"
 #define MODEM_CMD_SOCKETCFG			"AT#SCFG=1,1,512,90,600,2\r"
 #define MODEM_CMD_SOCKETCFGEX		"AT#SCFG=%d,%d,%d,%d,%d,%d\r"

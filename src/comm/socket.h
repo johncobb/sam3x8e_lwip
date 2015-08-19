@@ -75,6 +75,7 @@ typedef struct
 // cnx_id, ctx_id, pkt_size, glb_timeout, cnx_timeout (tenths of second), tx_timeout (tenths of second)
 typedef struct
 {
+	uint8_t socket_id;
 	uint8_t cnx_id;			// connection id
 	uint8_t ctx_id;			// context id
 	uint16_t pkt_size;		// packet size

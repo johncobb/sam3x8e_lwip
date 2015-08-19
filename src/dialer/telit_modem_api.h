@@ -19,6 +19,7 @@ void modem_setband(void);
 void modem_setcontext(void);
 void modem_setuserid(void);
 void modem_setpassword(void);
+void modem_setguardtime();
 void modem_skipesc(void);
 void modem_socketconfig(void);
 void modem_socketconfigex(modem_socket_t *socket);
